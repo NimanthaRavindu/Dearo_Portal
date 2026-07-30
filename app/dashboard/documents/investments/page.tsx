@@ -3,7 +3,7 @@ import {useEffect,useState} from 'react';
 import { Hash,TrendingUp,Filter,Download,UserCheck,Loader2 } from 'lucide-react';
 
 
-export const Investmentpage = () => {
+export default function Investmentpage(){
 
   const [investments,setInvestments] =useState([]);
   const [loading,setLoading] = useState(true);
