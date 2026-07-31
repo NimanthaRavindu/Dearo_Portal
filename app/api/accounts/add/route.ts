@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { promises as fs } from "fs";
 import path from "path";
 
+export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
