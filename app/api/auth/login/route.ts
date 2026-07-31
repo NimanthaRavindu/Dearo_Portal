@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db"; 
+import { db } from "@/lib/db";
+
+export const maxDuration = 30;
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
     try {
