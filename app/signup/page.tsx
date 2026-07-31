@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 import Link from "next/link"; 
 
+export const dynamic = 'force-dynamic';
+
 export default async function SignupPage() {
   const branches = await prisma.branch.findMany({
     select: {
