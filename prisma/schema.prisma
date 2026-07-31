@@ -1,140 +1,125 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
-  binaryTargets = ["native","rhel-openssl-1.0.x","rhel-openssl-3.0.x"]
-  
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "mysql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
-// --- MODELS ---
-
-model Branch {
-  id               Int               @id @default(autoincrement())
-  branch_name      String
-  branch_code      String            @unique
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-
-  // Relations
-  users            User[]
-  loans            Loan[]
-  accounts         Account[]
-  investments      Investment[]
-  requestHistories RequestHistory[]
-  
-  
-  
-  documentRequest  DocumentRequest[] @relation("BranchToRequest")
-}
-
-model User {
-  id        Int      @id @default(autoincrement())
-  nic       String   @unique
-  name      String  
-  email     String   @unique
-  password  String
-  role      Role   @default(USER)
-  
-  branch    Branch   @relation(fields: [branchId], references: [id])
-  branchId  Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([branchId])
-}
-
-model DocumentRequest {
-  id             Int           @id @default(autoincrement())
-  docNumber      String        @unique
-  documentType   DocType       
-  status         RequestStatus @default(PENDING)
-  requestedAt    DateTime      @default(now())
-  createdAt      DateTime      @default(now())
-
-  senderId       Int
-  branch         Branch        @relation("BranchToRequest",fields:[senderId],references:[id])
-
-  
-}
-
-// Loan Table
-model Loan {
-  id           Int      @id @default(autoincrement())
-  contract_no  String   @unique
-  amount       Float
-  duration     String
-  loan_type    String
-  createdAt    DateTime @default(now())
-
-  
-  branchId     Int
-  branch       Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-}
-
-// Account Table
-model Account {
-  id              Int      @id @default(autoincrement())
-  account_number  String   @unique
-  customer_name   String
-  amount          Float
-  date            String   
-  createdAt       DateTime @default(now())
-  bill_type       String
-  billPhoto       String?
-  branchId        Int
-  branch          Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-}
-
-// Investment Table
-model Investment {
+model account {
   id             Int      @id @default(autoincrement())
-  contract_no    String
+  account_number String   @unique(map: "Account_account_number_key")
+  customer_name  String
   amount         Float
+  date           String
   createdAt      DateTime @default(now())
-  uploadedAt     DateTime @default(now())
-  
+  bill_type      String
   branchId       Int
-  branch         Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  billPhoto      String?
+  branch         branch   @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "Account_branchId_fkey")
+
+  @@index([branchId], map: "Account_branchId_fkey")
 }
 
+model branch {
+  id              Int               @id @default(autoincrement())
+  branch_name     String
+  branch_code     String            @unique(map: "Branch_branch_code_key")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  account         account[]
+  documentrequest documentrequest[]
+  investment      investment[]
+  loan            loan[]
+  requesthistory  requesthistory[]
+  user            user[]
+}
 
-model RequestHistory {
+model documentrequest {
+  id           Int                          @id @default(autoincrement())
+  docNumber    String                       @unique(map: "DocumentRequest_docNumber_key")
+  documentType documentrequest_documentType
+  status       documentrequest_status       @default(PENDING)
+  requestedAt  DateTime                     @default(now())
+  senderId     Int
+  createdAt    DateTime                     @default(now())
+  branch       branch                       @relation(fields: [senderId], references: [id], onDelete: NoAction, map: "DocumentRequest_senderId_fkey")
+
+  @@index([senderId], map: "DocumentRequest_senderId_fkey")
+}
+
+model investment {
+  id          Int      @id @default(autoincrement())
+  contract_no String
+  amount      Float
+  createdAt   DateTime @default(now())
+  branchId    Int
+  uploadedAt  DateTime @default(now())
+  branch      branch   @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "Investment_branchId_fkey")
+
+  @@index([branchId], map: "Investment_branchId_fkey")
+}
+
+model loan {
+  id          Int      @id @default(autoincrement())
+  contract_no String   @unique(map: "Loan_contract_no_key")
+  amount      Float
+  duration    String
+  loan_type   String
+  createdAt   DateTime @default(now())
+  branchId    Int
+  branch      branch   @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "Loan_branchId_fkey")
+
+  @@index([branchId], map: "Loan_branchId_fkey")
+}
+
+model requesthistory {
   id           Int      @id @default(autoincrement())
   branchId     Int
-  documentType String   
-  referenceNo  String   
-  link         String   
+  documentType String
+  referenceNo  String
+  link         String
   status       String   @default("Viewed")
   createdAt    DateTime @default(now())
-  
-  branch       Branch   @relation(fields: [branchId], references: [id])
+  branch       branch   @relation(fields: [branchId], references: [id], onDelete: NoAction, map: "RequestHistory_branchId_fkey")
+
+  @@index([branchId], map: "RequestHistory_branchId_fkey")
 }
 
-// --- ENUMS ---
+model user {
+  id          Int       @id @default(autoincrement())
+  nic         String    @unique(map: "User_nic_key")
+  name        String
+  email       String    @unique(map: "User_email_key")
+  password    String
+  role        user_role @default(USER)
+  branchId    Int
+  createdAt   DateTime  @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime  @default(now()) @db.Timestamp(0)
+  branch_name String?   @db.VarChar(100)
+  branch      branch    @relation(fields: [branchId], references: [id], onDelete: NoAction, map: "User_branchId_fkey")
 
-enum Role {
-  ADMIN
-  USER
-  MANAGER
+  @@index([branchId], map: "User_branchId_idx")
 }
 
-enum DocType {
+enum documentrequest_documentType {
   LOAN
   ACCOUNT
   INVESTMENT
 }
 
-enum RequestStatus {
+enum documentrequest_status {
   PENDING
   APPROVED
   DECLINED
   RETURNED
   SUBMITTED
+}
+
+enum user_role {
+  ADMIN
+  USER
+  MANAGER
 }
