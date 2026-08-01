@@ -80,7 +80,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <Plus size={18} /> Add Account Document
         </h2>
         
-        <form action={addAccount} className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <form action={addAccount} className="grid grid-cols-1 md:grid-cols-5 gap-4" encType="multipart/form-data">
           <input name="accNo" placeholder="Account Number" className="border p-2 rounded-lg text-sm" />
           <input name="custNo" placeholder="Customer Name" className="border p-2 rounded-lg text-sm" required />
           
