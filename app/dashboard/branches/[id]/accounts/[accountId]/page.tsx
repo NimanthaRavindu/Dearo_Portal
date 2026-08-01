@@ -24,16 +24,9 @@ export default async function AccountDocumentPage({
 
   if (!account) return notFound();
 
-  // Helper function to resolve image src
-  const getImageSrc = (path: string) => {
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
-    return cleanPath.replace('/public', '');
-  };
-
   return (
     <div className="p-0 md:p-10 bg-slate-100 min-h-screen print:bg-white">
-      {/* Back Button */}
+      {/*  Back Button */}
       <Link 
         href={`/dashboard/branches/${branchId}/accounts`}
         className="flex items-center gap-2 text-blue-600 font-bold hover:underline print:hidden mb-4">
@@ -109,34 +102,34 @@ export default async function AccountDocumentPage({
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Account Type</p>
                 <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs font-black uppercase">
-                  {account.bill_type || "SAVINGS"}
+                  {account. bill_type  || "SAVINGS"}
                 </div>
               </div>
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Amount</p>
                 <p className="text-2xl font-black text-slate-900">
-                   Rs. {Number(account.amount || 0).toLocaleString()}.00
+                   Rs. {Number(account.amount|| 0).toLocaleString()}.00
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Uploaded Bill Attachment Section */}
+          {/* Uploaded  Bill Attachment Section */}
           <div className="pt-4 border-t border-slate-100 space-y-3">
             <h3 className="text-xs font-black text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-              <ImageIcon size={14}/>03. Uploaded Bill Attachment
+              <ImageIcon size={14}/>03.Uploaded Bill Attachment
             </h3>
 
             {account.billPhoto ? (
               <div className="mt-2 border border-slate-200 rounded-xl overflow-hidden bg-slate-50 p-2 max-w-md shadow-inner">
-                <p className="text-[10px] text-slate-400 mb-2 font-mono truncate">File Path: {account.billPhoto}</p>
-                <img 
-                  src={getImageSrc(account.billPhoto)} 
-                  alt="Uploaded Bill Attachment"
-                  className="w-full h-auto rounded-lg border border-slate-100 object-contain max-h-96" 
-                />
+                 <p className="text-[10px] text-slate-400 mb-2 font-mono truncate">File Path:{account.billPhoto}</p>
+                 <img 
+                   src={account.billPhoto} 
+                   alt="Uploaed Bill Attachment"
+                   className="w-full h-auto rounded-lg border border-slate-100 object-contain max-h-96" 
+                  />
               </div>
-            ) : (
+            ):(
               <div className="p-4 border border-dashed border-slate-200 bg-slate-50 rounded-xl text-center text-xs text-slate-400 italic">
                 No bill photo Attachment uploaded for this account record.
               </div>
