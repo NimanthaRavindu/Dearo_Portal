@@ -18,10 +18,10 @@ export default async function BranchDetailsPage({ params } :{params:{id:string}}
   const branch = await prisma.branch.findUnique({
     where: { id: branchId },
     include: {
-      accounts: true,
-      loans: true,
-      investments: true,
-      documentRequest :{
+      account: true,
+      loan: true,
+      investment: true,
+      documentrequest :{
         where:{
           status:"PENDING"
         },
@@ -32,7 +32,7 @@ export default async function BranchDetailsPage({ params } :{params:{id:string}}
     }
   }) as any;
 
-  const historyItems = await prisma.requestHistory.findMany({
+  const historyItems = await prisma.requesthistory.findMany({
     where : {branchId : branchId},
     orderBy : {createdAt:'desc'},
     take : 5

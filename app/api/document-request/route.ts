@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
 
-    const requests = await prisma.documentRequest.findMany({
+    const requests = await prisma.documentrequest.findMany({
       where: {
         ...(type && { documentType: type.toUpperCase() as any }),
       },
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const newRequest = await prisma.documentRequest.create({
+    const newRequest = await prisma.documentrequest.create({
       data: {
         docNumber: String(docNumber),
         documentType: documentType,
@@ -79,7 +79,7 @@ export async function PATCH(req: Request) {
     const newStatus = action === "SUBMIT" ? "APPROVED" : "DECLINED";
 
  
-    const updatedHistory = await prisma.requestHistory.updateMany({
+    const updatedHistory = await prisma.requesthistory.updateMany({
       where: {
         referenceNo: String(docNumber),
       },

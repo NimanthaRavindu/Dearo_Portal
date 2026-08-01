@@ -18,7 +18,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
 
   const branch = await prisma.branch.findUnique({
     where: { id: branchId },
-    include: { accounts: { orderBy: { id: "desc" } } }
+    include: { account: { orderBy: { id: "desc" } } }
   });
 
   async function addAccount(formData: FormData) {
@@ -127,7 +127,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
             </tr>
           </thead>
           <tbody>
-            {branch?.accounts.map((acc) => (
+            {branch?.account.map((acc) => (
               <tr key={acc.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                 <td className="p-4 text-sm font-medium text-slate-700">{acc.account_number}</td>
                 <td className="p-4 text-sm">
@@ -145,7 +145,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           </tbody>
         </table>
 
-        {branch?.accounts.length === 0 && (
+        {branch?.account.length === 0 && (
           <div className="p-12 text-center text-slate-400 italic">No account records found.</div>
         )}
       </div>

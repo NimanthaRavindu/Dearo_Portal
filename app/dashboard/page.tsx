@@ -7,24 +7,24 @@ export default async function DashboardPage() {
     include: {
       _count: {
         select: {
-          documentRequest: true,
-          accounts: true,
-          loans: true,
-          investments: true,
+          documentrequest: true,
+          account: true,
+          loan: true,
+          investment: true,
         },
       },
     },
   });
 
-  const totalAccounts = await prisma.documentRequest.count({
+  const totalAccounts = await prisma.documentrequest.count({
     where: { documentType: "ACCOUNT" },
   });
 
-  const totalLoans = await prisma.documentRequest.count({
+  const totalLoans = await prisma.documentrequest.count({
     where: { documentType: "LOAN" },
   });
 
-  const totalInvestments = await prisma.documentRequest.count({
+  const totalInvestments = await prisma.documentrequest.count({
     where: { documentType: "INVESTMENT" },
   });
 
@@ -58,9 +58,9 @@ export default async function DashboardPage() {
           <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
             {branches.map((branch) => {
               const totalBranchFiles =                 
-                branch._count.accounts + 
-                branch._count.loans + 
-                branch._count.investments;
+                branch._count.account + 
+                branch._count.loan + 
+                branch._count.investment;
 
               return (
                 <div key={branch.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">

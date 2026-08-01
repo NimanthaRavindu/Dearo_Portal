@@ -11,7 +11,7 @@ export async function submitDocument(docId: number) {
 
     // 1. numericId එකම භාවිතා කරන්න
     // 2. documentRequest වෙනුවට schema එකේ තියෙන නිවැරදි model name එක යොදන්න
-    const doc = await prisma.documentRequest.findUnique({
+    const doc = await prisma.documentrequest.findUnique({
       where: { id: numericId } // docId වෙනුවට numericId යොදන්න
     });
 
@@ -19,7 +19,7 @@ export async function submitDocument(docId: number) {
       return { error: `Document ID ${docId} not found in database.` };
     }
 
-    await prisma.documentRequest.update({
+    await prisma.documentrequest.update({
       where: { id: numericId },
       data: { status: "SUBMITTED" }
     });

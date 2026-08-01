@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 export async function addToHistory(branchId: number, type: string, ref: string, link: string) {
   try {
-      await prisma.requestHistory.create({
+      await prisma.requesthistory.create({
         data: {
         branchId: branchId,
         documentType: type,

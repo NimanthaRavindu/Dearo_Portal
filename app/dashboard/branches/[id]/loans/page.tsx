@@ -16,7 +16,7 @@ export default async function LoanPage({ params }: { params: Promise<{ id: strin
   
   const branch = await prisma.branch.findUnique({
     where: { id: branchId },
-    include: { loans: true }
+    include: { loan: true }
   });
 
   // Data Insertion Logic (Server Action)
@@ -77,7 +77,7 @@ export default async function LoanPage({ params }: { params: Promise<{ id: strin
             </tr>
           </thead>
           <tbody>
-            {branch?.loans.map((loan) => (
+            {branch?.loan.map((loan) => (
               <tr key={loan.id} className="border-b">
                 <td className="p-4">{loan.contract_no}</td>
                 <td className="p-4">Rs. {loan.amount.toLocaleString()}</td>

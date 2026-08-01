@@ -13,7 +13,7 @@ export async function POST(request: Request) {
             );
         }
 
-        await prisma.documentRequest.delete({
+        await prisma.documentrequest.delete({
             where: {
                 id: Number(id),
             },

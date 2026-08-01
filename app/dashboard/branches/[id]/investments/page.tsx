@@ -15,7 +15,7 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
   
   const branch = await prisma.branch.findUnique({
     where: { id: branchId },
-    include: { investments: true }
+    include: { investment: true }
   });
 
   async function addInvestment(formData: FormData) {
@@ -58,7 +58,7 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
             </tr>
           </thead>
           <tbody>
-            {branch?.investments.map((inv) => (
+            {branch?.investment.map((inv) => (
               <tr key={inv.id} className="border-b">
                 <td className="p-4">{inv.contract_no}</td>
                 <td className="p-4">Rs. {inv.amount.toLocaleString()}</td>

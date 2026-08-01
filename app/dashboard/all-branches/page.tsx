@@ -15,7 +15,7 @@ async function getAllBranchesData() {
     prisma.account.findMany({ include: { branch: true } }),
     prisma.loan.findMany({ include: { branch: true } }),
     prisma.investment.findMany({ include: { branch: true } }),
-    prisma.requestHistory.findMany({
+    prisma.requesthistory.findMany({
       include: { branch: true },
       orderBy: { createdAt: 'desc' },
       take: 8

@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export async function GET() {
     try {
-        const requests = await prisma.documentRequest.findMany({
+        const requests = await prisma.documentrequest.findMany({
             include: {
                  branch:true,
             },

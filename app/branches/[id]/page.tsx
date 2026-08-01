@@ -24,9 +24,9 @@ export default async function BranchDetailsPage({ params }: PageProps) {
         id: branchId 
     },
     include: {
-      loans: true,
-      accounts: true,
-      investments: true,
+      loan: true,
+      account: true,
+      investment: true,
     },
   }) as any;
 

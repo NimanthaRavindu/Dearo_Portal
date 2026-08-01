@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { User, CreditCard, Mail, Lock, Building2, Shield } from "lucide-react";
 import { redirect } from "next/navigation";
-import { Role } from "@prisma/client";
+import { user_role } from "@prisma/client";
 import Link from "next/link"; 
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +26,7 @@ export default async function SignupPage() {
     const password = formData.get("password") as string;
     const branchIdStr = formData.get("branchId") as string;
 
-    const role = formData.get("role") as Role; 
+    const role = formData.get("role") as user_role; 
 
     if (!fullName || !nicNumber || !email || !password || !branchIdStr || !role) {
       return;
