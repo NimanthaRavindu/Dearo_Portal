@@ -17,7 +17,7 @@ model account {
   createdAt      DateTime @default(now())
   bill_type      String
   branchId       Int
-  billPhoto      String?  @db.Text
+  billPhoto      String?
   branch         branch   @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "Account_branchId_fkey")
 
   @@index([branchId], map: "Account_branchId_fkey")
