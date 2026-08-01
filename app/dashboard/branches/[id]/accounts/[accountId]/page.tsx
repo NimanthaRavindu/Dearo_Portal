@@ -124,7 +124,7 @@ export default async function AccountDocumentPage({
               <div className="mt-2 border border-slate-200 rounded-xl overflow-hidden bg-slate-50 p-2 max-w-md shadow-inner">
                  <p className="text-[10px] text-slate-400 mb-2 font-mono truncate">File Path:{account.billPhoto}</p>
                  <img 
-                   src={account.billPhoto} 
+                   src={account.billPhoto?.startsWith('/') ? account.billPhoto : `/${account.billPhoto}`} 
                    alt="Uploaed Bill Attachment"
                    className="w-full h-auto rounded-lg border border-slate-100 object-contain max-h-96" 
                   />
