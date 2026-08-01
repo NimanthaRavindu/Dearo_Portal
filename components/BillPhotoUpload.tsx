@@ -10,7 +10,7 @@ export default function BillPhotoUploadPage() {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 🎯 1. File Size Validation (Max 4MB Check)
+      // 1. File Size Validation (Max 4MB)
       if (file.size > 4 * 1024 * 1024) {
         alert("පින්තූරයේ ප්‍රමාණය 4MB වලට වඩා වැඩිය. කරුණාකර කුඩා පින්තූරයක් තෝරන්න.");
         return;
@@ -19,12 +19,11 @@ export default function BillPhotoUploadPage() {
       setFileName(file.name);
       const reader = new FileReader();
 
-      // පින්තූරය කියවා අවසන් වූ පසු ක්‍රියාත්මක වන කොටස
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setPreview(base64String);
 
-        // 🎯 2. ප්‍රධාන Form එකේ ඇති Hidden Input එකට පින්තූරයේ දත්ත (Base64) සහ නම ඇතුළත් කිරීම
+        // 2. Set Base64 String & Name into Main Form's Hidden Inputs
         const mainInput = document.getElementById("hidden-bill-photo-input") as HTMLInputElement;
         const mainNameInput = document.getElementById("hidden-bill-name-input") as HTMLInputElement;
 
@@ -32,7 +31,6 @@ export default function BillPhotoUploadPage() {
         if (mainNameInput) mainNameInput.value = file.name;
       };
 
-      // File එක Base64 දත්ත සමූහයක් ලෙස කියවීම
       reader.readAsDataURL(file);
     }
   };
@@ -41,7 +39,6 @@ export default function BillPhotoUploadPage() {
     setPreview(null);
     setFileName("");
 
-    // ප්‍රධාන Form එකේ සඟවා ඇති Input Fields හිස් කිරීම
     const mainInput = document.getElementById("hidden-bill-photo-input") as HTMLInputElement;
     const mainNameInput = document.getElementById("hidden-bill-name-input") as HTMLInputElement;
     if (mainInput) mainInput.value = "";
@@ -56,7 +53,6 @@ export default function BillPhotoUploadPage() {
             <Upload className="text-slate-400 mb-1" size={24} />
             <span className="text-xs font-semibold text-slate-600">Click to upload document photo</span>
             <span className="text-[10px] text-slate-400 mt-0.5">PNG, JPG or JPEG (Max 4MB)</span>
-            {/* ⚠️ REMOVED 'required' attribute to fix form submit freeze/block */}
             <input
               id="bill-image-input"
               type="file"
