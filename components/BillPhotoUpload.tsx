@@ -7,6 +7,27 @@ export default function BillPhotoUploadPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
 
+  const updateHiddenInput = (id: string, value: string) => {
+    const input = document.getElementById(id) as HTMLInputElement;
+    if (input) {
+      // 🎯 React synthetic values හරියාකාරව update කිරීමට nativeSetter එක භාවිත කරමු
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value"
+      )?.set;
+      
+      if (nativeInputValueSetter) {
+        nativeInputValueSetter.call(input, value);
+      } else {
+        input.value = value;
+      }
+
+      // Form එකට අගය වෙනස් වූ බව දැනුම්දීමට Event එකක් dispatch කිරීම
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  };
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -24,11 +45,8 @@ export default function BillPhotoUploadPage() {
         setPreview(base64String);
 
         // 2. Set Base64 String & Name into Main Form's Hidden Inputs
-        const mainInput = document.getElementById("hidden-bill-photo-input") as HTMLInputElement;
-        const mainNameInput = document.getElementById("hidden-bill-name-input") as HTMLInputElement;
-
-        if (mainInput) mainInput.value = base64String;
-        if (mainNameInput) mainNameInput.value = file.name;
+        updateHiddenInput("hidden-bill-photo-input", base64String);
+        updateHiddenInput("hidden-bill-name-input", file.name);
       };
 
       reader.readAsDataURL(file);
@@ -39,10 +57,12 @@ export default function BillPhotoUploadPage() {
     setPreview(null);
     setFileName("");
 
-    const mainInput = document.getElementById("hidden-bill-photo-input") as HTMLInputElement;
-    const mainNameInput = document.getElementById("hidden-bill-name-input") as HTMLInputElement;
-    if (mainInput) mainInput.value = "";
-    if (mainNameInput) mainNameInput.value = "";
+    updateHiddenInput("hidden-bill-photo-input", "");
+    updateHiddenInput("hidden-bill-name-input", "");
+
+    // Clear file input
+    const fileInput = document.getElementById("bill-image-input") as HTMLInputElement;
+    if (fileInput) fileInput.value = "";
   };
 
   return (
