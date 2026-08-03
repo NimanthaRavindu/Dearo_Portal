@@ -25,7 +25,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
     "use server";
     
     // 🎯 1. Hidden inputs මඟින් එවන ලද Base64 දත්ත සහ පින්තූරයේ නම ලබා ගැනීම
-    const base64Data = formData.get("billPhoto") as string;
+    const base64Data = formData.get("billPhotoBase64") as string;
     const originalName = formData.get("billPhotoName") as string;
     let filename = "";
 
@@ -100,7 +100,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <input name="date" type="date" className="border p-2 rounded-lg text-sm" required />
 
           {/* 🎯 ඉතාමත් වැදගත්: Component එකෙන් එවන පින්තූර දත්ත ග්‍රහණය කර ගැනීමට ඇති Hidden Fields */}
-          <input id="hidden-bill-photo-input" name="billPhoto" type="hidden" />
+          <input id="hidden-bill-photo-input" name="billPhotoBase64z" type="hidden" />
           <input id="hidden-bill-name-input" name="billPhotoName" type="hidden" />
 
           <div className="md:col-span-5">
