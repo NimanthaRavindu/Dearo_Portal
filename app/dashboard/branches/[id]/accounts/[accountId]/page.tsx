@@ -40,25 +40,30 @@ export default async function AccountDocumentPage({
   const billType = acc.bill_type || acc.billType || "SAVINGS";
   const branchName = account.branch?.branch_name || (account.branch as any)?.branchName || "Branch N/A";
 
-  // 🎯 Base64 / Image Source Helper Function
+  // 🎯 Image Source Helper Function (Updated Fix)
   const getImageSrc = (pathStr?: string | null) => {
-    if (!pathStr) return "/placeholder.png"; // Empty වුණොත් Fallback Image එකක්
+    if (!pathStr) return "/placeholder.png";
 
     const cleanStr = pathStr.trim();
 
-    // 1. Base64 URL හෝ Remote Link
+    // 1. Base64 URL හෝ Remote Link (http / https) නම් direct return කරන්න
     if (cleanStr.startsWith('data:') || cleanStr.startsWith('http://') || cleanStr.startsWith('https://')) {
       return cleanStr;
     }
 
-    // 2. Raw Base64 string (Prefix එක නැතිව save වී ඇත්නම්)
+    // 2. Prefix එක නැති Raw Base64 string එකක් නම්
     if (cleanStr.length > 500 && !cleanStr.includes('/')) {
       return `data:image/jpeg;base64,${cleanStr}`;
     }
 
-    // 3. Normal local file path
-    const cleanPath = cleanStr.startsWith('/') ? cleanStr : `/${cleanStr}`;
-    return cleanPath.replace('/public', '');
+    // 3. File path එකක් නම් ('/uploads/...' හෝ 'uploads/...')
+    // 'public/' කොටස තියේ නම් එය ඉවත් කර නිවැරදි URL structure එක සකසයි
+    let formattedPath = cleanStr.replace(/^public[/\\]/, '');
+    if (!formattedPath.startsWith('/')) {
+      formattedPath = `/${formattedPath}`;
+    }
+
+    return formattedPath;
   };
 
   // Date Formatting Helper
