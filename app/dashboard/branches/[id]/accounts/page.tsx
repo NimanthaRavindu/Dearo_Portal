@@ -81,6 +81,9 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <div className="md:col-span-5">
             <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Upload Bill Attachment</label>
             <BillPhotoUploadPage />
+            {/* 🎯 Hidden Inputs */}
+            <input id="hidden-bill-photo-input" name="billPhoto" type="hidden" />
+            <input id="hidden-bill-name-input" name="billPhotoName" type="hidden" />
           </div>
 
           <button type="submit" className="md:col-span-5 bg-blue-600 text-white p-2.5 rounded-lg font-bold hover:bg-blue-700 transition">
