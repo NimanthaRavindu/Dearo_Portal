@@ -75,7 +75,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <input name="date" type="date" className="border p-2 rounded-lg text-sm" required />
 
           {/* 🎯 Hidden Inputs */}
-          <input id="hidden-bill-photo-input" name="billPhotoBase64" type="hidden" />
+          <input id="hidden-bill-photo-input" name="billPhoto" type="hidden" />
           <input id="hidden-bill-name-input" name="billPhotoName" type="hidden" />
 
           <div className="md:col-span-5">
