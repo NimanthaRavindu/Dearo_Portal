@@ -7,22 +7,16 @@ import PrintButton from "@/components/PrintButton";
 export default async function AccountDocumentPage({ 
   params 
 }: { 
-  params: Promise<{ id: string; accountId: string }> | { id: string; accountId: string }
+  params: Promise<{ id: string; accountId: string }> 
 }) {
-  // Next.js 14 සහ 15 දෙකටම ගැලපෙන සේ params resolve කිරීම
-  const resolvedParams = await Promise.resolve(params);
-  const branchId = parseInt(resolvedParams.id, 10);
-  const accountId = parseInt(resolvedParams.accountId, 10);
+  const resolvedParams = await params;
+  const branchId = parseInt(resolvedParams.id);
+  const accountId = parseInt(resolvedParams.accountId);
 
   if (isNaN(accountId) || isNaN(branchId)) {
-    return (
-      <div className="p-6 text-red-500 font-bold text-center">
-        Invalid Branch ID or Account ID
-      </div>
-    );
+    return <div className="p-6 text-red-500 font-bold">Invalid Branch ID or Account ID</div>;
   }
 
-  // Database එකෙන් Account එක Fetch කර ගැනීම
   const account = await prisma.account.findUnique({
     where: { id: accountId },
     include: { branch: true }
@@ -30,66 +24,26 @@ export default async function AccountDocumentPage({
 
   if (!account) return notFound();
 
-  // TypeScript Property Errors වළක්වා ගැනීමට Any object එකක් ලෙස cast කිරීම
-  const acc = account as any;
-
-  // DB එකේ තිබිය හැකි Field names එකින් එක පරීක්ෂා කිරීම
-  const photoData = acc.billPhoto || acc.bill_photo || acc.billPhotoPath || acc.photo || null;
-  const customerName = acc.customer_name || acc.customerName || "N/A";
-  const accountNumber = acc.account_number || acc.accountNumber || "N/A";
-  const billType = acc.bill_type || acc.billType || "SAVINGS";
-  const branchName = account.branch?.branch_name || (account.branch as any)?.branchName || "Branch N/A";
-
-  // 🎯 Image Source Helper Function (Updated Fix)
-  const getImageSrc = (pathStr?: string | null) => {
-    if (!pathStr) return "/placeholder.png";
-
-    const cleanStr = pathStr.trim();
-
-    // 1. Base64 URL හෝ Remote Link (http / https) නම් direct return කරන්න
-    if (cleanStr.startsWith('data:') || cleanStr.startsWith('http://') || cleanStr.startsWith('https://')) {
-      return cleanStr;
+  // Helper to ensure path renders correctly (Handles relative paths & Base64 Data URLs)
+  const getImageSrc = (pathStr: string) => {
+    if (pathStr.startsWith('data:image/') || pathStr.startsWith('http://') || pathStr.startsWith('https://')) {
+      return pathStr;
     }
-
-    // 2. Prefix එක නැති Raw Base64 string එකක් නම්
-    if (cleanStr.length > 500 && !cleanStr.includes('/')) {
-      return `data:image/jpeg;base64,${cleanStr}`;
-    }
-
-    // 3. File path එකක් නම් ('/uploads/...' හෝ 'uploads/...')
-    // 'public/' කොටස තියේ නම් එය ඉවත් කර නිවැරදි URL structure එක සකසයි
-    let formattedPath = cleanStr.replace(/^public[/\\]/, '');
-    if (!formattedPath.startsWith('/')) {
-      formattedPath = `/${formattedPath}`;
-    }
-
-    return formattedPath;
-  };
-
-  // Date Formatting Helper
-  const formatDate = (dateValue: any) => {
-    if (!dateValue) return new Date().toLocaleDateString();
-    const d = new Date(dateValue);
-    return isNaN(d.getTime()) 
-      ? new Date().toLocaleDateString() 
-      : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+    const cleanPath = pathStr.startsWith('/') ? pathStr : `/${pathStr}`;
+    return cleanPath.replace('/public', '');
   };
 
   return (
     <div className="p-0 md:p-10 bg-slate-100 min-h-screen print:bg-white">
       {/* Back Button */}
-      <div className="max-w-4xl mx-auto mb-4 print:hidden">
-        <Link 
-          href={`/dashboard/branches/${branchId}/accounts`}
-          className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline"
-        >
-          <ArrowLeft size={18} />
-          Back to Account List
-        </Link>
-      </div>
+      <Link 
+        href={`/dashboard/branches/${branchId}/accounts`}
+        className="flex items-center gap-2 text-blue-600 font-bold hover:underline print:hidden mb-4">
+          <ArrowLeft size={18}/>Back to Account List
+      </Link>
 
       {/* Action Bar */}
-      <div className="max-w-4xl mx-auto mb-6 flex justify-end print:hidden">
+      <div className="max-w-4xl mx-auto mb-6 flex justify-end p-4 print:hidden">
         <PrintButton />
       </div>
 
@@ -115,9 +69,7 @@ export default async function AccountDocumentPage({
             </p>
           </div>
           <div className="text-right">
-            <div className="text-sm font-bold text-slate-800">
-              {branchName}
-            </div>
+            <div className="text-sm font-bold text-slate-800">{account.branch?.branch_name}</div>
             <div className="text-[10px] text-slate-400 font-bold uppercase mt-1">
               ACC ID: {account.id.toString().padStart(6, '0')}
             </div>
@@ -134,21 +86,17 @@ export default async function AccountDocumentPage({
             </h2>
             <div className="grid grid-cols-2 gap-y-8">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-slate-50 rounded-xl text-slate-400">
-                  <User size={20} />
-                </div>
+                <div className="p-3 bg-slate-50 rounded-xl text-slate-400"><User size={20} /></div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase">Customer Name</p>
-                  <p className="text-lg font-bold text-slate-800">{customerName}</p>
+                  <p className="text-lg font-bold text-slate-800">{account.customer_name || "N/A"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-slate-50 rounded-xl text-slate-400">
-                  <CreditCard size={20} />
-                </div>
+                <div className="p-3 bg-slate-50 rounded-xl text-slate-400"><CreditCard size={20} /></div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase">Account Number</p>
-                  <p className="text-lg font-bold text-slate-800 tracking-wider">{accountNumber}</p>
+                  <p className="text-lg font-bold text-slate-800 tracking-wider">{account.account_number}</p>
                 </div>
               </div>
             </div>
@@ -163,13 +111,13 @@ export default async function AccountDocumentPage({
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Account Type</p>
                 <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs font-black uppercase">
-                  {billType}
+                  {account.bill_type || "SAVINGS"}
                 </div>
               </div>
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Amount</p>
                 <p className="text-2xl font-black text-slate-900">
-                  Rs. {Number(acc.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                   Rs. {Number(account.amount || 0).toLocaleString()}.00
                 </p>
               </div>
             </div>
@@ -178,20 +126,20 @@ export default async function AccountDocumentPage({
           {/* Section 03: Uploaded Bill Attachment Display */}
           <div className="pt-4 border-t border-slate-100 space-y-3">
             <h3 className="text-xs font-black text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-              <ImageIcon size={14} /> 03. Uploaded Bill Attachment
+              <ImageIcon size={14}/>03. Uploaded Bill Attachment
             </h3>
 
-            {photoData ? (
+            {account.billPhoto ? (
               <div className="mt-2 border border-slate-200 rounded-xl overflow-hidden bg-slate-50 p-2 max-w-md shadow-inner">
                 <img 
-                  src={getImageSrc(photoData)} 
+                  src={getImageSrc(account.billPhoto)} 
                   alt="Uploaded Bill Attachment"
                   className="w-full h-auto rounded-lg border border-slate-100 object-contain max-h-96" 
                 />
               </div>
             ) : (
               <div className="p-4 border border-dashed border-slate-200 bg-slate-50 rounded-xl text-center text-xs text-slate-400 italic">
-                No bill photo attachment uploaded for this account record.
+                No bill photo Attachment uploaded for this account record.
               </div>
             )}
           </div>
@@ -199,13 +147,13 @@ export default async function AccountDocumentPage({
           {/* Dates */}
           <div className="grid grid-cols-2 gap-8">
             <div className="flex items-center gap-4">
-              <Calendar size={20} className="text-slate-300" />
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Statement Date</p>
-                <p className="text-sm font-bold text-slate-700">
-                  {formatDate(acc.date || acc.createdAt)}
-                </p>
-              </div>
+               <Calendar size={20} className="text-slate-300" />
+               <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Statement Date</p>
+                  <p className="text-sm font-bold text-slate-700">
+                    {account.date || new Date(account.createdAt || Date.now()).toLocaleDateString()}
+                  </p>
+               </div>
             </div>
           </div>
 
@@ -226,7 +174,7 @@ export default async function AccountDocumentPage({
         {/* Document Footer */}
         <div className="absolute bottom-10 left-12 right-12 border-t border-slate-100 pt-6 flex justify-between items-center text-[9px] font-bold text-slate-400 uppercase tracking-widest">
           <span>Dearo Core Banking System</span>
-          <span>Printed Date: {formatDate(new Date())}</span>
+          <span>Printed: {new Date().toLocaleDateString()}</span>
         </div>
       </div>
     </div>
