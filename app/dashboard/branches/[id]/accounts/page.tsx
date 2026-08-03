@@ -74,20 +74,22 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <input name="amount" type="number" step="0.01" placeholder="Amount" className="border p-2 rounded-lg text-sm" required />
           <input name="date" type="date" className="border p-2 rounded-lg text-sm" required />
 
-          {/* 🎯 Hidden Inputs */}
-          <input id="hidden-bill-photo-input" name="billPhoto" type="hidden" />
-          <input id="hidden-bill-name-input" name="billPhotoName" type="hidden" />
 
-          <div className="md:col-span-5">
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Upload Bill Attachment</label>
+          <div className="space-y-2 mb-4">
+            <label className="text-xs font-bold text-slate-600 uppercase">
+              Upload Bill Photo / Document Attachment
+            </label>
+            
+            {/* File Pick කර Base64 සකසන UI Component එක */}
             <BillPhotoUploadPage />
-            {/* 🎯 Hidden Inputs */}
-            <input id="hidden-bill-photo-input" name="billPhoto" type="hidden" />
-            <input id="hidden-bill-name-input" name="billPhotoName" type="hidden" />
-          </div>
+
+            {/* 🎯 2. අත්‍යවශ්‍යම කොටස: Server එකට Data යන Hidden Input Tags */}
+            <input type="hidden" id="hidden-bill-photo-input" name="billPhoto" />
+            <input type="hidden" id="hidden-bill-name-input" name="billName" />
+         </div>
 
           <button type="submit" className="md:col-span-5 bg-blue-600 text-white p-2.5 rounded-lg font-bold hover:bg-blue-700 transition">
-            Submit Account Details
+            Submit Account Details 
           </button>
         </form>
       </div>
