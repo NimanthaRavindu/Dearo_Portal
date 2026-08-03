@@ -17,9 +17,9 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
     // 2. Server එකෙන් නව Props ලැබෙන විට Local State එක auto-update වන ලෙස සකස් කිරීම
     useEffect(() => {
         if (branch) {
-            setAccounts(branch.accounts || []);
-            setLoans(branch.loans || []);
-            setInvestments(branch.investments || []);
+            setAccounts(branch.account || []);
+            setLoans(branch.loan || []);
+            setInvestments(branch.investment || []);
         }
     }, [branch]);
 
