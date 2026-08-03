@@ -4,8 +4,6 @@ import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import ViewDocButton from "@/components/ViewDocButton";
 import BillPhotoUploadPage from "@/components/BillPhotoUpload";
-import { promises as fs } from "fs";
-import path from "path";
 
 export default async function AccountPage({ params }: { params: Promise<{ id: string }> }) {
 
@@ -24,33 +22,10 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
   async function addAccount(formData: FormData) {
     "use server";
     
-    // 🎯 1. Hidden inputs මඟින් එවන ලද Base64 දත්ත සහ පින්තූරයේ නම ලබා ගැනීම
+    // 🎯 1. Hidden input මඟින් එවන ලද Base64 දත්ත කෙලින්ම ලබා ගැනීම
     const base64Data = formData.get("billPhotoBase64") as string;
-    const originalName = formData.get("billPhotoName") as string;
-    let filename = "";
 
-    if (base64Data && originalName) {
-      try {
-        // Base64 String එකෙන් සැබෑ පින්තූරයේ කේත කොටස පමණක් වෙන් කර ගැනීම
-        const base64Image = base64Data.split(';base64,').pop();
-        
-        if (base64Image) {
-          // දත්ත Buffer එකක් බවට පත් කිරීම
-          const buffer = Buffer.from(base64Image, 'base64');
-          
-          filename = `${Date.now()}-${originalName.replace(/\s+/g, "_")}`;
-          const uploadPath = path.join(process.cwd(), "public", "uploads", filename);
-          
-          // uploads ෆෝල්ඩරය සෑදීම සහ පින්තූරය පරිගණකයේ ලිවීම (Save කිරීම)
-          await fs.mkdir(path.dirname(uploadPath), { recursive: true });
-          await fs.writeFile(uploadPath, buffer);
-        }
-      } catch (uploadError) {
-        console.error("File write failed:", uploadError);
-      }
-    }
-
-    // 🎯 2. Database එකට දත්ත ඇතුළත් කිරීම (මෙහිදී billPhoto එක කිසිසේත් null නොවේ)
+    // 🎯 2. File එකක් ලෙස Disk එකට Save නොකර, Base64 String එකම Direct DB එකට Save කිරීම
     await prisma.account.create({
       data: {
         account_number: formData.get("accNo") as string,
@@ -59,7 +34,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
         amount: parseFloat(formData.get("amount") as string),
         date: formData.get("date") as string,
         branchId: branchId,
-        billPhoto: filename ? `/uploads/${filename}` : null,
+        billPhoto: base64Data || null, // 👈 Base64 String එක direct save වේ
       }
     });
 
@@ -81,7 +56,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
         </h2>
         
         <form action={addAccount} className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <input name="accNo" placeholder="Account Number" className="border p-2 rounded-lg text-sm" />
+          <input name="accNo" placeholder="Account Number" className="border p-2 rounded-lg text-sm" required />
           <input name="custNo" placeholder="Customer Name" className="border p-2 rounded-lg text-sm" required />
           
           <select name="billtype" className="border p-2 rounded-lg text-sm bg-white" required>
@@ -99,7 +74,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <input name="amount" type="number" step="0.01" placeholder="Amount" className="border p-2 rounded-lg text-sm" required />
           <input name="date" type="date" className="border p-2 rounded-lg text-sm" required />
 
-          {/* 🎯 ඉතාමත් වැදගත්: Component එකෙන් එවන පින්තූර දත්ත ග්‍රහණය කර ගැනීමට ඇති Hidden Fields */}
+          {/* 🎯 Hidden Inputs */}
           <input id="hidden-bill-photo-input" name="billPhotoBase64" type="hidden" />
           <input id="hidden-bill-name-input" name="billPhotoName" type="hidden" />
 
