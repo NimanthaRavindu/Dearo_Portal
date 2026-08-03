@@ -15,9 +15,9 @@ export default function MainDashboardCharts({ branches }: { branches: any[] }) {
   
   const data = branches.map(b => ({
     name: b.branch_name,
-    Accounts:b._count.accounts,
-    Loans:b._count.loans,
-    Investments:b._count.investments,
+    Accounts:b._count.account,
+    Loans:b._count.loan,
+    Investments:b._count.investment,
     Requests:b._count.documentRequest,
   }));
 
