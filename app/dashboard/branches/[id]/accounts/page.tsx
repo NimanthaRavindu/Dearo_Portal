@@ -4,8 +4,14 @@ import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import ViewDocButton from "@/components/ViewDocButton";
 import BillPhotoUploadPage from "@/components/BillPhotoUpload";
-import { promises as fs } from "fs";
-import path from "path";
+import { v2 as cloudinary } from "cloudinary";
+
+// ☁️ Cloudinary Configuration
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export default async function AccountPage({ params }: { params: Promise<{ id: string }> }) {
 
@@ -24,33 +30,38 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
   async function addAccount(formData: FormData) {
     "use server";
     
-    // 🎯 1. Hidden inputs මඟින් එවන ලද Base64 දත්ත සහ පින්තූරයේ නම ලබා ගැනීම
+    // 🎯 1. Hidden inputs මඟින් එවන ලද Base64 දත්ත ලබා ගැනීම
     const base64Data = formData.get("billPhotoBase64") as string;
-    const originalName = formData.get("billPhotoName") as string;
-    let filename = "";
+    let cloudinaryUrl = "";
 
-    if (base64Data && originalName) {
+    if (base64Data) {
       try {
-        // Base64 String එකෙන් සැබෑ පින්තූරයේ කේත කොටස පමණක් වෙන් කර ගැනීම
+        // Base64 String එක Buffer එකක් බවට පත් කිරීම
         const base64Image = base64Data.split(';base64,').pop();
         
         if (base64Image) {
-          // දත්ත Buffer එකක් බවට පත් කිරීම
           const buffer = Buffer.from(base64Image, 'base64');
           
-          filename = `${Date.now()}-${originalName.replace(/\s+/g, "_")}`;
-          const uploadPath = path.join(process.cwd(), "public", "uploads", filename);
-          
-          // uploads ෆෝල්ඩරය සෑදීම සහ පින්තූරය පරිගණකයේ ලිවීම (Save කිරීම)
-          await fs.mkdir(path.dirname(uploadPath), { recursive: true });
-          await fs.writeFile(uploadPath, buffer);
+          // 🎯 Cloudinary එකට Direct Stream Upload කිරීම
+          const uploadResult = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+              { folder: "dearo_bills" }, // Cloudinary එකේ folder එක
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+              }
+            ).end(buffer);
+          });
+
+          // Cloudinary Direct HTTPS URL එක ලබාගැනීම
+          cloudinaryUrl = (uploadResult as any).secure_url;
         }
       } catch (uploadError) {
-        console.error("File write failed:", uploadError);
+        console.error("Cloudinary upload failed:", uploadError);
       }
     }
 
-    // 🎯 2. Database එකට දත්ත ඇතුළත් කිරීම (මෙහිදී billPhoto එක කිසිසේත් null නොවේ)
+    // 🎯 2. Database එකට දත්ත ඇතුළත් කිරීම (billPhoto ලෙස Cloudinary URL එක Save වේ)
     await prisma.account.create({
       data: {
         account_number: formData.get("accNo") as string,
@@ -59,7 +70,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
         amount: parseFloat(formData.get("amount") as string),
         date: formData.get("date") as string,
         branchId: branchId,
-        billPhoto: filename ? `/uploads/${filename}` : null,
+        billPhoto: cloudinaryUrl || null, // Cloudinary URL එක
       }
     });
 
@@ -99,8 +110,8 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <input name="amount" type="number" step="0.01" placeholder="Amount" className="border p-2 rounded-lg text-sm" required />
           <input name="date" type="date" className="border p-2 rounded-lg text-sm" required />
 
-          {/* 🎯 ඉතාමත් වැදගත්: Component එකෙන් එවන පින්තූර දත්ත ග්‍රහණය කර ගැනීමට ඇති Hidden Fields */}
-          <input id="hidden-bill-photo-input" name="billPhotoBase64z" type="hidden" />
+          {/* 🎯 Hidden Fields (billPhotoBase64 ලෙස නිවැරදි කර ඇත) */}
+          <input id="hidden-bill-photo-input" name="billPhotoBase64" type="hidden" />
           <input id="hidden-bill-name-input" name="billPhotoName" type="hidden" />
 
           <div className="md:col-span-5">
