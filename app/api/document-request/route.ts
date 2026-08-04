@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     const newRequest = await prisma.documentrequest.create({
       data: {
-        docNumber: String(docNumber || "N/A"),
+        docNumber: String(docNumber || ""),
         documentType: documentType,
         senderId: Number(branchId) || 1,
         status: "PENDING",

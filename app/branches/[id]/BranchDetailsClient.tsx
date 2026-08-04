@@ -27,6 +27,10 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
         const docNo = item.account_number || item.acc_no || item.accountNo || item.contract_no || item.loan_no || item.inv_no || item.id;
         const displayName = docNo ? String(docNo) : "N/A";
 
+        /* 
+           [Confirm Dialog - Submit]
+           තේරුම: [displayName] ලේඛනය Submit කිරීමට පරිශීලකයාගෙන් තහවුරු කිරීමක් ලබා ගනී.
+        */
         if (!confirm(`${displayName} ලේඛනය ඉදිරිපත් කිරීමට ඔබට සහතිකද?`)) return;
 
         setIsSubmitting(item.id);
@@ -52,12 +56,24 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                     setInvestments((prev) => prev.filter(inv => inv.id !== item.id));
                 }
 
+                /* 
+                   [Alert Message - Submit Success]
+                   තේරුම: ලේඛනය සාර්ථකව API/Database වෙත ඉදිරිපත් කළ බව දන්වයි.
+                */
                 alert("ලේඛනය සාර්ථකව ඉදිරිපත් කරන ලදී.");
                 router.refresh(); // Server Data Re-fetch කිරීම
             } else {
+                /* 
+                   [Alert Message - Submit Failed]
+                   තේරුම: Server එකෙන් දෝෂයක් ලැබුණු විට පෙන්වන පණිවිඩය.
+                */
                 alert("දෝෂයක් සිදු විය. කරුණාකර නැවත උත්සාහ කරන්න.");
             }
         } catch (error) {
+            /* 
+               [Catch Block Error Alert]
+               තේරුම: Network හෝ Server සම්බන්ධතා ඇනහිටීමකදී පෙන්වන පණිවිඩය.
+            */
             alert("Database සම්බන්ධතාවයේ ගැටලුවකි.");
         } finally {
             setIsSubmitting(null);
@@ -69,6 +85,10 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
         const docNo = item.account_number || item.acc_no || item.accountNo || item.contract_no || item.loan_no || item.inv_no || item.id;
         const displayName = docNo ? String(docNo) : "N/A";
 
+        /* 
+           [Confirm Dialog - Delete]
+           තේරුම: [displayName] ලේඛනය සහ ඊට අදාළ සියලු History දත්ත Database එකෙන් සම්පූර්ණයෙන්ම ඉවත් කිරීමට තහවුරු කිරීමක් ලබා ගනී.
+        */
         if (!confirm(`${displayName} ලේඛනය සහ ඊට අදාළ සියලු History දත්ත Database එකෙන් ඉවත් කිරීමට ඔබට සහතිකද?`)) return;
 
         setIsSubmitting(`delete-${item.id}`);
@@ -93,12 +113,24 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                     setInvestments((prev) => prev.filter(inv => inv.id !== item.id));
                 }
 
+                /* 
+                   [Alert Message - Delete Success]
+                   තේරුම: දත්ත Database එකෙන් සාර්ථකව ඉවත් කළ බව දන්වයි.
+                */
                 alert("දත්ත සාර්ථකව Database එකෙන් ඉවත් කරන ලදී.");
                 router.refresh();
             } else {
+                /* 
+                   [Alert Message - Delete Failed]
+                   තේරුම: ඉවත් කිරීමේදී යම් දෝෂයක් සිදු වූ බව දන්වයි.
+                */
                 alert("ඉවත් කිරීමේදී දෝෂයක් සිදු විය.");
             }
         } catch (error) {
+            /* 
+               [Catch Block Error Alert]
+               තේරුම: Network හෝ Server සම්බන්ධතා ඇනහිටීමකදී පෙන්වන පණිවිඩය.
+            */
             alert("Database සම්බන්ධතාවයේ ගැටලුවකි.");
         } finally {
             setIsSubmitting(null);
@@ -145,7 +177,7 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                                                     {isSubmitting === acc.id ? <Loader2 size={12} className="animate-spin" /> : "Submit"}
                                                 </button>
 
-                                                {/* Delete Button */}
+                                                {/* Delete Button (title: "Delete Record & History" - අදාළ වාර්තාව සහ ඊට අයත් පූර්ව සටහන් සියල්ලම මකා දමන්න) */}
                                                 <button
                                                     onClick={() => handleDelete(acc, "ACCOUNT")}
                                                     disabled={isSubmitting === acc.id || isSubmitting === `delete-${acc.id}`}
@@ -189,7 +221,7 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                                                     {isSubmitting === loan.id ? <Loader2 size={12} className="animate-spin" /> : "Submit"}
                                                 </button>
 
-                                                {/* Delete Button */}
+                                                {/* Delete Button (title: "Delete Record & History" - අදාළ වාර්තාව සහ ඊට අයත් පූර්ව සටහන් සියල්ලම මකා දමන්න) */}
                                                 <button
                                                     onClick={() => handleDelete(loan, "LOAN")}
                                                     disabled={isSubmitting === loan.id || isSubmitting === `delete-${loan.id}`}
@@ -233,7 +265,7 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                                                     {isSubmitting === inv.id ? <Loader2 size={12} className="animate-spin" /> : "Submit"}
                                                 </button>
 
-                                                {/* Delete Button */}
+                                                {/* Delete Button (title: "Delete Record & History" - අදාළ වාර්තාව සහ ඊට අයත් පූර්ව සටහන් සියල්ලම මකා දමන්න) */}
                                                 <button
                                                     onClick={() => handleDelete(inv, "INVESTMENT")}
                                                     disabled={isSubmitting === inv.id || isSubmitting === `delete-${inv.id}`}
