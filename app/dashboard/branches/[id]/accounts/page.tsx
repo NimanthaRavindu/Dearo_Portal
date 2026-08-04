@@ -30,22 +30,24 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
   async function addAccount(formData: FormData) {
     "use server";
     
-    // 🎯 1. Hidden inputs මඟින් එවන ලද Base64 දත්ත ලබා ගැනීම
+    // 🎯 1. Account Number එක sanitize කිරීම ("" එකක් ආවොත් strictly null කිරීම)
+    const rawAccNo = formData.get("accNo") as string;
+    const accNo = rawAccNo && rawAccNo.trim() !== "" ? rawAccNo.trim() : null;
+
+    // 🎯 2. Hidden inputs මඟින් එවන ලද Base64 දත්ත ලබා ගැනීම
     const base64Data = formData.get("billPhotoBase64") as string;
     let cloudinaryUrl = "";
 
     if (base64Data) {
       try {
-        // Base64 String එක Buffer එකක් බවට පත් කිරීම
         const base64Image = base64Data.split(';base64,').pop();
         
         if (base64Image) {
           const buffer = Buffer.from(base64Image, 'base64');
           
-          // 🎯 Cloudinary එකට Direct Stream Upload කිරීම
           const uploadResult = await new Promise((resolve, reject) => {
             cloudinary.uploader.upload_stream(
-              { folder: "dearo_bills" }, // Cloudinary එකේ folder එක
+              { folder: "dearo_bills" },
               (error, result) => {
                 if (error) reject(error);
                 else resolve(result);
@@ -53,7 +55,6 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
             ).end(buffer);
           });
 
-          // Cloudinary Direct HTTPS URL එක ලබාගැනීම
           cloudinaryUrl = (uploadResult as any).secure_url;
         }
       } catch (uploadError) {
@@ -61,16 +62,16 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
       }
     }
 
-    // 🎯 2. Database එකට දත්ත ඇතුළත් කිරීම (billPhoto ලෙස Cloudinary URL එක Save වේ)
+    // 🎯 3. Database එකට දත්ත ඇතුළත් කිරීම (account_number එක null ලෙස යයි)
     await prisma.account.create({
       data: {
-        account_number: formData.get("accNo") as string,
+        account_number: accNo, // 👈 empty string ("") වෙනුවට strictly null යවයි
         customer_name: formData.get("custNo") as string,
         bill_type: formData.get("billtype") as string,
         amount: parseFloat(formData.get("amount") as string),
         date: formData.get("date") as string,
         branchId: branchId,
-        billPhoto: cloudinaryUrl || null, // Cloudinary URL එක
+        billPhoto: cloudinaryUrl || null,
       }
     });
 
@@ -110,7 +111,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <input name="amount" type="number" step="0.01" placeholder="Amount" className="border p-2 rounded-lg text-sm" required />
           <input name="date" type="date" className="border p-2 rounded-lg text-sm" required />
 
-          {/* 🎯 Hidden Fields */}
+          {/* Hidden Fields */}
           <input id="hidden-bill-photo-input" name="billPhotoBase64" type="hidden" />
           <input id="hidden-bill-name-input" name="billPhotoName" type="hidden" />
 
@@ -140,7 +141,6 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <tbody>
             {branch?.account.map((acc) => (
               <tr key={acc.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                {/* 🎯 account_number එක නැතිනම් හිස්ව (empty) පෙන්වයි */}
                 <td className="p-4 text-sm font-medium text-slate-700">{acc.account_number ?? ""}</td>
                 <td className="p-4 text-sm">
                   <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-xs font-bold uppercase">
@@ -150,7 +150,6 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
                 <td className="p-4 text-sm font-bold text-slate-800">Rs. {acc.amount.toLocaleString()}</td>
                 <td className="p-4 text-slate-500 text-sm">{acc.date}</td>
                 <td className="p-4 text-right">
-                  {/* 🎯 null නම් empty string එකක් ලෙස refNo වෙත යවයි */}
                   <ViewDocButton 
                     branchId={branchId} 
                     type="Account" 
