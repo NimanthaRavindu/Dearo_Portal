@@ -110,7 +110,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <input name="amount" type="number" step="0.01" placeholder="Amount" className="border p-2 rounded-lg text-sm" required />
           <input name="date" type="date" className="border p-2 rounded-lg text-sm" required />
 
-          {/* 🎯 Hidden Fields (billPhotoBase64 ලෙස නිවැරදි කර ඇත) */}
+          {/* 🎯 Hidden Fields */}
           <input id="hidden-bill-photo-input" name="billPhotoBase64" type="hidden" />
           <input id="hidden-bill-name-input" name="billPhotoName" type="hidden" />
 
@@ -140,16 +140,23 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <tbody>
             {branch?.account.map((acc) => (
               <tr key={acc.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                <td className="p-4 text-sm font-medium text-slate-700">{acc.account_number}</td>
+                {/* 🎯 account_number එක නැතිනම් හිස්ව (empty) පෙන්වයි */}
+                <td className="p-4 text-sm font-medium text-slate-700">{acc.account_number ?? ""}</td>
                 <td className="p-4 text-sm">
                   <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-xs font-bold uppercase">
                     {acc.bill_type}
                   </span>
                 </td>
                 <td className="p-4 text-sm font-bold text-slate-800">Rs. {acc.amount.toLocaleString()}</td>
-                <td className="p-4 text-sm text-slate-500">{acc.date}</td>
+                <td className="p-4 text-slate-500 text-sm">{acc.date}</td>
                 <td className="p-4 text-right">
-                  <ViewDocButton branchId={branchId} type="Account" refNo={acc.account_number.toString()} link={`/dashboard/branches/${branchId}/accounts/${acc.id}`} />
+                  {/* 🎯 null නම් empty string එකක් ලෙස refNo වෙත යවයි */}
+                  <ViewDocButton 
+                    branchId={branchId} 
+                    type="Account" 
+                    refNo={acc.account_number?.toString() ?? ""} 
+                    link={`/dashboard/branches/${branchId}/accounts/${acc.id}`} 
+                  />
                 </td>
               </tr>
             ))}
