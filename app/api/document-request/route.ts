@@ -124,14 +124,12 @@ export async function DELETE(req: Request) {
       );
     }
 
-    // A. Requesthistory එකෙන් අදාළ History Records ඉවත් කිරීම
     if (docNumber && docNumber !== "N/A") {
       await prisma.requesthistory.deleteMany({
         where: { referenceNo: String(docNumber) },
       }).catch((e) => console.log("No history found to delete or error:", e.message));
     }
 
-    // B. Documentrequest Table එකෙන් Delete කිරීම (ID එක ඇත්නම්)
     if (id) {
       await prisma.documentrequest.delete({
         where: { id: Number(id) },
