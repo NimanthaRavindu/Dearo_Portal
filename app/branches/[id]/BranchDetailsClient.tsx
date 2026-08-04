@@ -7,11 +7,14 @@ import { Loader2, Banknote, TrendingUp, Building2, Users } from 'lucide-react';
 const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests: any[] }) => {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
+    // 1. Branch Data වලින් Local States සකස් කිරීම
     const [accounts, setAccounts] = useState<any[]>([]);
     const [loans, setLoans] = useState<any[]>([]);
     const [investments, setInvestments] = useState<any[]>([]);
 
+    // 2. Server එකෙන් නව Props ලැබෙන විට Local State එක auto-update වන ලෙස සකස් කිරීම
     useEffect(() => {
         if (branch) {
             setAccounts(branch.account || []);
@@ -21,10 +24,7 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
     }, [branch]);
 
     const handleRequest = async (docNo: string, type: string) => {
-        if (!docNo || docNo === "N/A") {
-            alert("ලේඛන අංකය නිවැරදි නැත.");
-            return;
-        }
+        
 
         if (!confirm(`${docNo} අංකය සහිත ලේඛනය ඉදිරිපත් කිරීමට ඔබට සහතිකද?`)) return;
 
@@ -41,16 +41,17 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
             });
 
             if (response.ok) {
+                // UI එකෙන් එම item එක ඉවත් කිරීම
                 if (type === "ACCOUNT") {
-                    setAccounts((prev) => prev.filter(acc => (acc.account_number || acc.acc_no || acc.accountNo) !== docNo));
+                    setAccounts((prev) => prev.filter(acc => (acc.account_number || acc.acc_no || acc.id) !== docNo));
                 } else if (type === "LOAN") {
-                    setLoans((prev) => prev.filter(loan => (loan.contract_no || loan.loan_no || loan.contractNo) !== docNo));
+                    setLoans((prev) => prev.filter(loan => (loan.contract_no || loan.loan_no || loan.id) !== docNo));
                 } else if (type === "INVESTMENT") {
-                    setInvestments((prev) => prev.filter(inv => (inv.contract_no || inv.inv_no || inv.contractNo) !== docNo));
+                    setInvestments((prev) => prev.filter(inv => (inv.contract_no || inv.inv_no || inv.id) !== docNo));
                 }
 
                 alert("ලේඛනය සාර්ථකව ඉදිරිපත් කරන ලදී.");
-                router.refresh();
+                router.refresh(); // Server Data Re-fetch කිරීම
             } else {
                 alert("දෝෂයක් සිදු විය. කරුණාකර නැවත උත්සාහ කරන්න.");
             }
@@ -60,11 +61,6 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
             setIsSubmitting(null);
         }
     };
-
-    // Valid Document Numbers ඇති Records පමණක් Filter කරගැනීම
-    const validAccounts = accounts.filter(acc => acc.account_number || acc.acc_no || acc.accountNo);
-    const validLoans = loans.filter(loan => loan.contract_no || loan.loan_no || loan.contractNo);
-    const validInvestments = investments.filter(inv => inv.contract_no || inv.inv_no || inv.contractNo);
 
     return (
         <div className="w-full max-w-6xl mx-auto p-4 space-y-8">
@@ -91,11 +87,11 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                     <div className="overflow-hidden border border-slate-200 rounded-2xl bg-white shadow-xl">
                         <table className="w-full">
                             <tbody className="divide-y divide-slate-100">
-                                {validAccounts && validAccounts.length > 0 ? validAccounts.map((acc: any, index: number) => {
+                                {accounts && accounts.length > 0 ? accounts.map((acc: any, index: number) => {
                                     const docNo = acc.account_number || acc.acc_no || acc.accountNo;
                                     return (
                                         <tr key={acc.id || index} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-6 py-5 font-bold text-slate-700">{docNo}</td>
+                                            <td className="px-6 py-5 font-bold text-slate-700">{docNo || 'N/A'}</td>
                                             <td className="px-6 py-5 text-right">
                                                 <button
                                                     onClick={() => handleRequest(docNo, "ACCOUNT")}
@@ -108,7 +104,7 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                                         </tr>
                                     );
                                 }) : (
-                                    <tr><td colSpan={2} className="p-4 text-center text-slate-400 text-xs">No pending accounts</td></tr>
+                                    <tr><td className="p-4 text-center text-slate-400 text-xs">No pending accounts</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -124,11 +120,11 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                     <div className="overflow-hidden border border-slate-200 rounded-2xl bg-white shadow-xl">
                         <table className="w-full">
                             <tbody className="divide-y divide-slate-100">
-                                {validLoans && validLoans.length > 0 ? validLoans.map((loan: any, index: number) => {
+                                {loans && loans.length > 0 ? loans.map((loan: any, index: number) => {
                                     const docNo = loan.contract_no || loan.loan_no || loan.contractNo;
                                     return (
                                         <tr key={loan.id || index} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-6 py-5 font-bold text-slate-700">{docNo}</td>
+                                            <td className="px-6 py-5 font-bold text-slate-700">{docNo || 'N/A'}</td>
                                             <td className="px-6 py-5 text-right">
                                                 <button
                                                     onClick={() => handleRequest(docNo, "LOAN")}
@@ -141,7 +137,7 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                                         </tr>
                                     );
                                 }) : (
-                                    <tr><td colSpan={2} className="p-4 text-center text-slate-400 text-xs">No pending loans</td></tr>
+                                    <tr><td className="p-4 text-center text-slate-400 text-xs">No pending loans</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -157,11 +153,11 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                     <div className="overflow-hidden border border-slate-200 rounded-2xl bg-white shadow-xl">
                         <table className="w-full">
                             <tbody className="divide-y divide-slate-100">
-                                {validInvestments && validInvestments.length > 0 ? validInvestments.map((inv: any, index: number) => {
+                                {investments && investments.length > 0 ? investments.map((inv: any, index: number) => {
                                     const docNo = inv.contract_no || inv.inv_no || inv.contractNo;
                                     return (
                                         <tr key={inv.id || index} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-6 py-5 font-bold text-slate-700">{docNo}</td>
+                                            <td className="px-6 py-5 font-bold text-slate-700">{docNo || 'N/A'}</td>
                                             <td className="px-6 py-5 text-right">
                                                 <button
                                                     onClick={() => handleRequest(docNo, "INVESTMENT")}
@@ -174,7 +170,7 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                                         </tr>
                                     );
                                 }) : (
-                                    <tr><td colSpan={2} className="p-4 text-center text-slate-400 text-xs">No pending investments</td></tr>
+                                    <tr><td className="p-4 text-center text-slate-400 text-xs">No pending investments</td></tr>
                                 )}
                             </tbody>
                         </table>
