@@ -104,9 +104,9 @@ export default function DashboardStats({ stats, branches }: DashboardStatsProps)
                 {branches.map((branch) => {
                   const totalBranchFiles =
                     (branch._count?.documentRequest || 0) +
-                    (branch._count?.accounts || 0) +
-                    (branch._count?.loans || 0) +
-                    (branch._count?.investments || 0);
+                    (branch._count?.account || 0) +
+                    (branch._count?.loan || 0) +
+                    (branch._count?.investment || 0);
 
                   return (
                     <tr 
