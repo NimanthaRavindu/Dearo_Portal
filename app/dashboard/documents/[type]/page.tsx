@@ -3,24 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use, useTransition } from "react";
-import { 
-  ArrowLeft, 
-  AlertCircle, 
-  Check, 
-  X, 
-  FileText, 
-  Loader2, 
-  Info, 
-  Tag, 
-  Calendar, 
-  Activity, 
-  Clock, 
-  CheckCircle2 
-} from "lucide-react";
+import { ArrowLeft, AlertCircle, Check, X, FileText, Loader2, Info, Tag, Calendar, Activity, Clock, CheckCircle2 } from "lucide-react";
 
 interface DocumentItem {
   id: number;
-  docNumber: string;
+  docNumber?: string;
   documentType: string;
   status: string;
   createdAt: string;
@@ -100,13 +87,17 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
   };
 
   // 3. Main Action Function: Status වෙනස් කර documentRequest table එකෙන් delete කිරීම
-  const deleteAction = async (documentId: number, docNumber: string, action: "SUBMIT" | "DECLINE") => {
+  const deleteAction = async (documentId: number, rawDocNumber: string | undefined, action: "SUBMIT" | "DECLINE") => {
     if (isPending) return;
+
+    // docNumber එක Valid ද යන්න පරීක්ෂාව
+    const isValidDocNo = rawDocNumber && rawDocNumber !== "undefined" && rawDocNumber !== "N/A";
+    const docText = isValidDocNo ? `${rawDocNumber} අංකය සහිත ` : "";
 
     const isConfirmed = window.confirm(
       action === "SUBMIT"
-        ? `${docNumber} අංකය සහිත ලේඛනය ඉදිරිපත් කිරීමට ඔබට සහතිකද?`
-        : `${docNumber} අංකය සහිත ලේඛනය ප්‍රතික්ෂේප කිරීමට ඔබට සහතිකද?`
+        ? `මෙම ${docText}ලේඛනය ඉදිරිපත් කිරීමට ඔබට සහතිකද?`
+        : `මෙම ${docText}ලේඛනය ප්‍රතික්ෂේප කිරීමට ඔබට සහතිකද?`
     );
 
     if (!isConfirmed) return;
@@ -120,8 +111,10 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
       try {
         setActionLoading(documentId);
 
-        // පියවර 1: requesthistory table එකේ status එක update කිරීම
-        await updateStatusAction(docNumber, action);
+        // Valid Doc Number එකක් තියෙනවා නම් විතරක් PATCH request එක යැවීම
+        if (isValidDocNo) {
+          await updateStatusAction(rawDocNumber, action);
+        }
 
         // පියවර 2: documentRequest table එකෙන් record එක delete කිරීම
         const response = await fetch("/api/documents/delete", {
@@ -139,8 +132,8 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
         if (response.ok && result.success) {
           alert(
             action === "SUBMIT"
-              ? `${docNumber} අංකය සහිත ලේඛනය සාර්ථකව ඉදිරිපත් කරන ලදී.`
-              : `${docNumber} අංකය සහිත ලේඛනය ප්‍රතික්ෂේප කරන ලදී.`
+              ? `ලේඛනය සාර්ථකව ඉදිරිපත් කරන ලදී.`
+              : `ලේඛනය ප්‍රතික්ෂේප කරන ලදී.`
           );
           router.refresh();
           return;
@@ -215,82 +208,92 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
           </thead>
           <tbody className="divide-y divide-slate-100 italic">
             {dataList.length > 0 ? (
-              dataList.map((doc) => (
-                <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
-                  {/* Details */}
-                  <td className="px-10 py-7">
-                    <div className="flex flex-col">
-                      <span className="font-black text-slate-700 text-sm">#{doc.docNumber}</span>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase">ID: {doc.id}</span>
-                    </div>
-                  </td>
+              dataList.map((doc) => {
+                // docNumber එක valid ද නැද්ද යන්න පරීක්ෂා කිරීම
+                const isValidDocNo = doc.docNumber && doc.docNumber !== "undefined" && doc.docNumber !== "N/A";
 
-                  {/* Type */}
-                  <td className="px-10 py-7">
-                    <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase border border-blue-200">
-                      {doc.documentType || type}
-                    </span>
-                  </td>
-
-                  {/* Date */}
-                  <td className="px-10 py-7 text-slate-400 text-xs font-bold uppercase">
-                    {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}
-                  </td>
-
-                  {/* Status */}
-                  <td className="px-10 py-7">
-                    <span className={`flex items-center gap-1.5 text-[10px] font-black uppercase ${
-                      doc.status === 'APPROVED' || doc.status === 'SUBMITTED' 
-                        ? 'text-emerald-600' 
-                        : doc.status === 'DECLINED' 
-                        ? 'text-rose-600' 
-                        : 'text-amber-500 animate-pulse'
-                    }`}>
-                      {doc.status === 'APPROVED' || doc.status === 'SUBMITTED' ? (
-                        <CheckCircle2 size={12} />
-                      ) : doc.status === 'DECLINED' ? (
-                        <AlertCircle size={12} />
-                      ) : (
-                        <Clock size={12} />
-                      )}
-                      {doc.status}
-                    </span>
-                  </td>
-
-                  {/* Action Buttons */}
-                  <td className="px-10 py-7">
-                    <div className="flex items-center justify-center gap-4">
-                      {/* Submit Button */}
-                      <button
-                        onClick={() => deleteAction(doc.id, doc.docNumber, 'SUBMIT')}
-                        disabled={isPending || actionLoading === doc.id}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 transition-all disabled:opacity-50"
-                      >
-                        {actionLoading === doc.id ? (
-                          <Loader2 size={12} className="animate-spin" />
+                return (
+                  <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
+                    {/* Details */}
+                    <td className="px-10 py-7">
+                      <div className="flex flex-col">
+                        {isValidDocNo ? (
+                          <span className="font-black text-slate-700 text-sm">#{doc.docNumber}</span>
                         ) : (
-                          <Check size={14} />
+                          /* Account number නැති විට #undefined වෙනුවට හිස්ව පෙන්වීම සඳහා Dash (-) එකක් පමණක් දමා ඇත */
+                          <span className="font-bold text-slate-300 text-sm">-</span>
                         )}
-                        Submit
-                      </button>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">ID: {doc.id}</span>
+                      </div>
+                    </td>
 
-                      {/* Decline Button */}
-                      <button
-                        onClick={() => deleteAction(doc.id, doc.docNumber, 'DECLINE')}
-                        disabled={isPending || actionLoading === doc.id}
-                        className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 transition-all disabled:opacity-50"
-                      >
-                        {actionLoading === doc.id ? (
-                          <Loader2 size={12} className="animate-spin" />
+                    {/* Type */}
+                    <td className="px-10 py-7">
+                      <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase border border-blue-200">
+                        {doc.documentType || type}
+                      </span>
+                    </td>
+
+                    {/* Date */}
+                    <td className="px-10 py-7 text-slate-400 text-xs font-bold uppercase">
+                      {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-10 py-7">
+                      <span className={`flex items-center gap-1.5 text-[10px] font-black uppercase ${
+                        doc.status === 'APPROVED' || doc.status === 'SUBMITTED' 
+                          ? 'text-emerald-600' 
+                          : doc.status === 'DECLINED' 
+                          ? 'text-rose-600' 
+                          : 'text-amber-500 animate-pulse'
+                      }`}>
+                        {doc.status === 'APPROVED' || doc.status === 'SUBMITTED' ? (
+                          <CheckCircle2 size={12} />
+                        ) : doc.status === 'DECLINED' ? (
+                          <AlertCircle size={12} />
                         ) : (
-                          <X size={14} />
+                          <Clock size={12} />
                         )}
-                        Decline
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                        {doc.status}
+                      </span>
+                    </td>
+
+                    {/* Action Buttons */}
+                    <td className="px-10 py-7">
+                      <div className="flex items-center justify-center gap-4">
+                        {/* Submit Button */}
+                        <button
+                          onClick={() => deleteAction(doc.id, doc.docNumber, 'SUBMIT')}
+                          disabled={isPending || actionLoading === doc.id}
+                          className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 transition-all disabled:opacity-50"
+                        >
+                          {actionLoading === doc.id ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <Check size={14} />
+                          )}
+                          Submit
+                        </button>
+
+                        {/* Decline Button */}
+                        <button
+                          onClick={() => deleteAction(doc.id, doc.docNumber, 'DECLINE')}
+                          disabled={isPending || actionLoading === doc.id}
+                          className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 transition-all disabled:opacity-50"
+                        >
+                          {actionLoading === doc.id ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <X size={14} />
+                          )}
+                          Decline
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan={5} className="px-10 py-28 text-center text-slate-300 font-black uppercase text-xs tracking-[0.3em]">

@@ -43,7 +43,7 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
             if (response.ok) {
                 // UI එකෙන් එම item එක ඉවත් කිරීම
                 if (type === "ACCOUNT") {
-                    setAccounts((prev) => prev.filter(acc => (acc.account_number || acc.acc_no || acc.id) !== docNo));
+                    setAccounts((prev) => prev.filter(acc => (acc.account_number || !acc.account_number ||acc.acc_no || acc.id) !== docNo));
                 } else if (type === "LOAN") {
                     setLoans((prev) => prev.filter(loan => (loan.contract_no || loan.loan_no || loan.id) !== docNo));
                 } else if (type === "INVESTMENT") {
