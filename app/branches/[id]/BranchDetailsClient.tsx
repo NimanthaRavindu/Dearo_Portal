@@ -20,7 +20,7 @@ interface BranchDetailsClientProps {
 
 const BranchDetailsClient = ({ branch, allRequests }: BranchDetailsClientProps) => {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState<string | number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
 
   // Local States for Lists
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -36,38 +36,53 @@ const BranchDetailsClient = ({ branch, allRequests }: BranchDetailsClientProps) 
     }
   }, [branch]);
 
-  const handleRequest = async (item: any, type: "ACCOUNT" | "LOAN" | "INVESTMENT") => {
-    // Document Number එක නැත්නම් Item ID එක භාවිත කරයි
-    const docNo = item.account_number || item.acc_no || item.accountNo || item.contract_no || item.loan_no || item.inv_no || item.contractNo || "";
-    const submitId = item.id || docNo;
+  const handleRequest = async (docNo: string, type: "ACCOUNT" | "LOAN" | "INVESTMENT") => {
+    if (!docNo) {
+      alert("සංගණන අංකය නොමැත.");
+      return;
+    }
 
-    const confirmText = docNo ? `${docNo} අංකය සහිත ලේඛනය` : "මෙම ලේඛනය";
-    if (!confirm(`${confirmText} ඉදිරිපත් කිරීමට ඔබට සහතිකද?`)) return;
+    if (!confirm(`${docNo} අංකය සහිත ලේඛනය ඉදිරිපත් කිරීමට ඔබට සහතිකද?`)) return;
 
-    setIsSubmitting(submitId);
+    setIsSubmitting(docNo);
     try {
       const response = await fetch('/api/document-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          docNumber: String(docNo || submitId),
+          docNumber: String(docNo),
           documentType: type,
           branchId: branch.id,
         }),
       });
 
       if (response.ok) {
-        // UI එකෙන් Item එක ඉවත් කිරීම
+        // UI එකෙන් සාර්ථකව Filter කර ඉවත් කිරීම
         if (type === "ACCOUNT") {
-          setAccounts((prev) => prev.filter((acc) => (acc.id || acc.account_number || acc.acc_no) !== submitId));
+          setAccounts((prev) =>
+            prev.filter((acc) => {
+              const id = acc.account_number || acc.acc_no || acc.accountNo || acc.id;
+              return String(id) !== String(docNo);
+            })
+          );
         } else if (type === "LOAN") {
-          setLoans((prev) => prev.filter((loan) => (loan.id || loan.contract_no || loan.loan_no) !== submitId));
+          setLoans((prev) =>
+            prev.filter((loan) => {
+              const id = loan.contract_no || loan.loan_no || loan.contractNo || loan.id;
+              return String(id) !== String(docNo);
+            })
+          );
         } else if (type === "INVESTMENT") {
-          setInvestments((prev) => prev.filter((inv) => (inv.id || inv.contract_no || inv.inv_no) !== submitId));
+          setInvestments((prev) =>
+            prev.filter((inv) => {
+              const id = inv.contract_no || inv.inv_no || inv.contractNo || inv.id;
+              return String(id) !== String(docNo);
+            })
+          );
         }
 
         alert("ලේඛනය සාර්ථකව ඉදිරිපත් කරන ලදී.");
-        router.refresh();
+        router.refresh(); // Server Data Re-fetch කිරීම
       } else {
         alert("දෝෂයක් සිදු විය. කරුණාකර නැවත උත්සාහ කරන්න.");
       }
@@ -86,7 +101,7 @@ const BranchDetailsClient = ({ branch, allRequests }: BranchDetailsClientProps) 
           <Building2 size={24} />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-slate-800">{branch?.name || ''}</h1>
+          <h1 className="text-2xl font-black text-slate-800">{branch?.name || 'Branch Details'}</h1>
           <p className="text-sm font-medium text-slate-500 uppercase tracking-widest">{branch?.code || ''}</p>
         </div>
       </div>
@@ -105,18 +120,17 @@ const BranchDetailsClient = ({ branch, allRequests }: BranchDetailsClientProps) 
               <tbody className="divide-y divide-slate-100">
                 {accounts && accounts.length > 0 ? (
                   accounts.map((acc: any, index: number) => {
-                    const docNo = acc.account_number || acc.acc_no || acc.accountNo || "";
-                    const submitId = acc.id || docNo || index;
+                    const docNo = acc.account_number || acc.acc_no || acc.accountNo;
                     return (
                       <tr key={acc.id || index} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-5 font-bold text-slate-700">{docNo}</td>
+                        <td className="px-6 py-5 font-bold text-slate-700">{docNo || ""}</td>
                         <td className="px-6 py-5 text-right">
                           <button
-                            onClick={() => handleRequest(acc, "ACCOUNT")}
-                            disabled={isSubmitting === submitId}
+                            onClick={() => handleRequest(docNo, "ACCOUNT")}
+                            disabled={isSubmitting === docNo}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-black px-6 py-2.5 rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-blue-200 disabled:opacity-50"
                           >
-                            {isSubmitting === submitId ? <Loader2 size={12} className="animate-spin" /> : "Submit"}
+                            {isSubmitting === docNo ? <Loader2 size={12} className="animate-spin" /> : "Submit"}
                           </button>
                         </td>
                       </tr>
@@ -143,18 +157,17 @@ const BranchDetailsClient = ({ branch, allRequests }: BranchDetailsClientProps) 
               <tbody className="divide-y divide-slate-100">
                 {loans && loans.length > 0 ? (
                   loans.map((loan: any, index: number) => {
-                    const docNo = loan.contract_no || loan.loan_no || loan.contractNo || "";
-                    const submitId = loan.id || docNo || index;
+                    const docNo = loan.contract_no || loan.loan_no || loan.contractNo;
                     return (
                       <tr key={loan.id || index} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-5 font-bold text-slate-700">{docNo}</td>
+                        <td className="px-6 py-5 font-bold text-slate-700">{docNo || 'N/A'}</td>
                         <td className="px-6 py-5 text-right">
                           <button
-                            onClick={() => handleRequest(loan, "LOAN")}
-                            disabled={isSubmitting === submitId}
+                            onClick={() => handleRequest(docNo, "LOAN")}
+                            disabled={isSubmitting === docNo}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-2.5 rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-200 disabled:opacity-50"
                           >
-                            {isSubmitting === submitId ? <Loader2 size={12} className="animate-spin" /> : "Submit"}
+                            {isSubmitting === docNo ? <Loader2 size={12} className="animate-spin" /> : "Submit"}
                           </button>
                         </td>
                       </tr>
@@ -181,18 +194,17 @@ const BranchDetailsClient = ({ branch, allRequests }: BranchDetailsClientProps) 
               <tbody className="divide-y divide-slate-100">
                 {investments && investments.length > 0 ? (
                   investments.map((inv: any, index: number) => {
-                    const docNo = inv.contract_no || inv.inv_no || inv.contractNo || "";
-                    const submitId = inv.id || docNo || index;
+                    const docNo = inv.contract_no || inv.inv_no || inv.contractNo;
                     return (
                       <tr key={inv.id || index} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-5 font-bold text-slate-700">{docNo}</td>
+                        <td className="px-6 py-5 font-bold text-slate-700">{docNo || 'N/A'}</td>
                         <td className="px-6 py-5 text-right">
                           <button
-                            onClick={() => handleRequest(inv, "INVESTMENT")}
-                            disabled={isSubmitting === submitId}
+                            onClick={() => handleRequest(docNo, "INVESTMENT")}
+                            disabled={isSubmitting === docNo}
                             className="bg-purple-600 hover:bg-purple-700 text-white font-black px-6 py-2.5 rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-purple-200 disabled:opacity-50"
                           >
-                            {isSubmitting === submitId ? <Loader2 size={12} className="animate-spin" /> : "Submit"}
+                            {isSubmitting === docNo ? <Loader2 size={12} className="animate-spin" /> : "Submit"}
                           </button>
                         </td>
                       </tr>

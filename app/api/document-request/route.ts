@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -34,22 +35,14 @@ export async function POST(req: Request) {
 
     if (!documentType) {
       return NextResponse.json(
-        { error: "Missing required field: documentType" },
+        { error: "Missing required fields (docNumber or documentType)" },
         { status: 400 }
       );
     }
 
-    // docNumber එක "undefined", "null" හෝ හිස් නම් එය පිරිසිදු හිස් string ("") එකක් ලෙස සකස් කිරීම
-    const safeDocNumber =
-      docNumber &&
-      docNumber !== "undefined" &&
-      docNumber !== "null"
-        ? String(docNumber).trim()
-        : "";
-
     const newRequest = await prisma.documentrequest.create({
       data: {
-        docNumber: safeDocNumber,
+        docNumber: String(docNumber),
         documentType: documentType,
         senderId: Number(branchId) || 1,
         status: "PENDING",
@@ -78,42 +71,29 @@ export async function PATCH(req: Request) {
 
     if (!action) {
       return NextResponse.json(
-        { success: false, error: "action is required" },
+        { success: false, error: "docNumber and action are required" },
         { status: 400 }
       );
     }
 
     const newStatus = action === "SUBMIT" ? "APPROVED" : "DECLINED";
 
-    // docNumber එක Valid ද යන්න පරීක්ෂාව
-    const safeDocNumber =
-      docNumber &&
-      docNumber !== "undefined" &&
-      docNumber !== "null"
-        ? String(docNumber).trim()
-        : "";
+ 
+    const updatedHistory = await prisma.requesthistory.updateMany({
+      where: {
+        referenceNo: String(docNumber),
+      },
+      data: {
+        status: newStatus,
+      },
+    });
 
-    let updatedCount = 0;
-
-    // docNumber එකක් තිබේ නම් පමණක් requesthistory එක update කරයි
-    if (safeDocNumber !== "") {
-      const updatedHistory = await prisma.requesthistory.updateMany({
-        where: {
-          referenceNo: safeDocNumber,
-        },
-        data: {
-          status: newStatus,
-        },
-      });
-      updatedCount = updatedHistory.count;
-    }
-
-    console.log("Updated History Result Count:", updatedCount);
+    console.log("Updated History Result:", updatedHistory);
 
     return NextResponse.json({
       success: true,
       message: `Status successfully updated to ${newStatus} in requesthistory`,
-      updatedCount: updatedCount,
+      updatedCount: updatedHistory.count,
     });
   } catch (error: any) {
     console.error("DATABASE PATCH ERROR:", error);
