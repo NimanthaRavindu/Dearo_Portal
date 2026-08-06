@@ -64,15 +64,17 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     fetchDocuments();
   }, [type]);
 
-  const updateStatusAction = async (docNumber: string, action: "SUBMIT" | "DECLINE") => {
+  // 2. Function: requesthistory වගුවේ status එක වෙනස් කිරීම (PATCH Request)
+  const updateStatusAction = async (docNumber: string, action: "SUBMIT" | "DECLINE", docType: string) => {
     const response = await fetch("/api/document-request", {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        docNumber: docNumber,
+        docNumber: docNumber || "",
         action: action,
+        documentType: docType,
       }),
     });
 
@@ -85,9 +87,9 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     return data;
   };
 
-  const deleteAction = async (documentId: number, rawDocNumber: string | undefined, action: "SUBMIT" | "DECLINE") => {
+  // 3. Main Action Function: Status වෙනස් කර documentRequest table එකෙන් delete කිරීම
+  const deleteAction = async (documentId: number, rawDocNumber: string | undefined, action: "SUBMIT" | "DECLINE", docType: string) => {
     if (isPending) return;
-
 
     const isValidDocNo = Boolean(
       rawDocNumber &&
@@ -109,17 +111,17 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
 
     const previousData = [...dataList];
 
+    // UI එකෙන් ක්ෂණිකව ඉවත් කිරීම (Optimistic Update)
     setDataList((prev) => prev.filter((item) => item.id !== documentId));
 
     startTransition(async () => {
       try {
         setActionLoading(documentId);
 
+        // docNumber තිබුණත් නැතත් requesthistory update කිරීම සඳහා PATCH Request එක යැවීම
+        await updateStatusAction(rawDocNumber || "", action, docType || type);
 
-        if (isValidDocNo && rawDocNumber) {
-          await updateStatusAction(rawDocNumber, action);
-        }
-
+        // documentRequest table එකෙන් record එක delete කිරීම
         const response = await fetch("/api/documents/delete", {
           method: "POST",
           headers: {
@@ -142,10 +144,10 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
           return;
         }
 
+        // Response සාර්ථක නොවූයේ නම් UI Rollback කිරීම
         setDataList(previousData);
         alert(result.error || "ලේඛනය ඉවත් කිරීමට අපොහොසත් විය. කරුණාකර නැවත උත්සාහ කරන්න.");
       } catch (error: any) {
-    
         setDataList(previousData);
         alert("දෝෂයක් සිදු විය: " + (error.message || "කරුණාකර නැවත උත්සාහ කරන්න."));
       } finally {
@@ -154,7 +156,6 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     });
   };
 
-  // Loading Screen
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center font-bold text-slate-400 uppercase italic">
@@ -221,7 +222,7 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
 
                 return (
                   <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
-              
+                    {/* Document Details */}
                     <td className="px-10 py-7">
                       <div className="flex flex-col">
                         {isValidDocNo && (
@@ -267,7 +268,7 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
                       <div className="flex items-center justify-center gap-4">
                         {/* Submit Button */}
                         <button
-                          onClick={() => deleteAction(doc.id, doc.docNumber, 'SUBMIT')}
+                          onClick={() => deleteAction(doc.id, doc.docNumber, 'SUBMIT', doc.documentType || type)}
                           disabled={isPending || actionLoading === doc.id}
                           className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 transition-all disabled:opacity-50"
                         >
@@ -281,9 +282,9 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
 
                         {/* Decline Button */}
                         <button
-                          onClick={() => deleteAction(doc.id, doc.docNumber, 'DECLINE')}
+                          onClick={() => deleteAction(doc.id, doc.docNumber, 'DECLINE', doc.documentType || type)}
                           disabled={isPending || actionLoading === doc.id}
-                          className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-[10px] uppercase flex items-center gap-1 transition-all disabled:opacity-50"
+                          className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 transition-all disabled:opacity-50"
                         >
                           {actionLoading === doc.id ? (
                             <Loader2 size={12} className="animate-spin" />

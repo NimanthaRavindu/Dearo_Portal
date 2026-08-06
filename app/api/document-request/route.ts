@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -35,14 +34,21 @@ export async function POST(req: Request) {
 
     if (!documentType) {
       return NextResponse.json(
-        { error: "Missing required fields (docNumber or documentType)" },
+        { error: "Missing required field: documentType" },
         { status: 400 }
       );
     }
 
+    const safeDocNumber =
+      docNumber &&
+      docNumber !== "undefined" &&
+      docNumber !== "null"
+        ? String(docNumber).trim()
+        : "";
+
     const newRequest = await prisma.documentrequest.create({
       data: {
-        docNumber: String(docNumber),
+        docNumber: safeDocNumber,
         documentType: documentType,
         senderId: Number(branchId) || 1,
         status: "PENDING",
@@ -65,35 +71,78 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { docNumber, action } = body;
+    const { docNumber, action, documentType } = body;
 
-    console.log("PATCH Received Data:", { docNumber, action });
+    console.log("PATCH Received Data:", { docNumber, action, documentType });
 
     if (!action) {
       return NextResponse.json(
-        { success: false, error: "docNumber and action are required" },
+        { success: false, error: "action is required" },
         { status: 400 }
       );
     }
 
     const newStatus = action === "SUBMIT" ? "APPROVED" : "DECLINED";
 
- 
-    const updatedHistory = await prisma.requesthistory.updateMany({
-      where: {
-        referenceNo: String(docNumber),
-      },
-      data: {
-        status: newStatus,
-      },
-    });
+    const safeDocNumber =
+      docNumber &&
+      docNumber !== "undefined" &&
+      docNumber !== "null" &&
+      docNumber !== "N/A"
+        ? String(docNumber).trim()
+        : "";
 
-    console.log("Updated History Result:", updatedHistory);
+    let updatedCount = 0;
+
+    // 1. Valid referenceNo/docNumber එකක් තිබේ නම්
+    if (safeDocNumber !== "") {
+      const updatedHistory = await prisma.requesthistory.updateMany({
+        where: {
+          referenceNo: safeDocNumber,
+        },
+        data: {
+          status: newStatus,
+        },
+      });
+      updatedCount = updatedHistory.count;
+    }
+
+    // 2. docNumber එකක් නැති නම් හෝ referenceNo එකෙන් Record එකක් සොයා ගැනීමට නොහැකි වූයේ නම් (හිස් referenceNo සඳහා)
+    if (updatedCount === 0) {
+      const docTypeVariants = documentType
+        ? [
+            documentType,
+            documentType.toUpperCase(),
+            documentType.toLowerCase(),
+            documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase(),
+          ]
+        : [];
+
+      const updatedHistory = await prisma.requesthistory.updateMany({
+        where: {
+          OR: [
+            { referenceNo: "" },
+            { referenceNo: " " },
+          ],
+          ...(docTypeVariants.length > 0 && {
+            documentType: {
+              in: docTypeVariants,
+            },
+          }),
+        },
+        data: {
+          status: newStatus,
+        },
+      });
+      updatedCount = updatedHistory.count;
+    }
+
+    console.log("Updated History Result Count:", updatedCount);
 
     return NextResponse.json({
       success: true,
       message: `Status successfully updated to ${newStatus} in requesthistory`,
-      updatedCount: updatedHistory.count,
+      updatedCount: updatedCount,
     });
   } catch (error: any) {
     console.error("DATABASE PATCH ERROR:", error);
