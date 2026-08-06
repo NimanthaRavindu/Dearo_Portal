@@ -123,7 +123,7 @@ const BranchDetailsClient = ({ branch, allRequests }: BranchDetailsClientProps) 
                     const docNo = acc.account_number || acc.acc_no || acc.accountNo;
                     return (
                       <tr key={acc.id || index} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-5 font-bold text-slate-700">{docNo || "N/A"}</td>
+                        <td className="px-6 py-5 font-bold text-slate-700">{docNo || ""}</td>
                         <td className="px-6 py-5 text-right">
                           <button
                             onClick={() => handleRequest(docNo, "ACCOUNT")}
