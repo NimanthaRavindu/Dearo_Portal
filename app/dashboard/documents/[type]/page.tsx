@@ -209,7 +209,7 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
           <tbody className="divide-y divide-slate-100 italic">
             {dataList.length > 0 ? (
               dataList.map((doc) => {
-                const isValidDocNo = doc.docNumber && doc.docNumber !== "undefined" && doc.docNumber !== "N/A";
+                const isValidDocNo = doc.docNumber && doc.docNumber !== "" ;
 
                 return (
                   <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
