@@ -209,7 +209,6 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
           <tbody className="divide-y divide-slate-100 italic">
             {dataList.length > 0 ? (
               dataList.map((doc) => {
-                // docNumber එක valid ද නැද්ද යන්න පරීක්ෂා කිරීම
                 const isValidDocNo = doc.docNumber && doc.docNumber !== "undefined" && doc.docNumber !== "N/A";
 
                 return (
@@ -220,8 +219,8 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
                         {isValidDocNo ? (
                           <span className="font-black text-slate-700 text-sm">#{doc.docNumber}</span>
                         ) : (
-                          /* Account number නැති විට #undefined වෙනුවට හිස්ව පෙන්වීම සඳහා Dash (-) එකක් පමණක් දමා ඇත */
-                          <span className="font-bold text-slate-300 text-sm">-</span>
+                        
+                          <span className="font-bold text-slate-300 text-sm"></span>
                         )}
                         <span className="text-[10px] font-bold text-slate-400 uppercase">ID: {doc.id}</span>
                       </div>

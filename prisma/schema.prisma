@@ -10,14 +10,14 @@ datasource db {
 
 model account {
   id             Int      @id @default(autoincrement())
-  account_number String?  @unique(map: "Account_account_number_key")
+  account_number String?   @unique(map: "Account_account_number_key")
   customer_name  String
   amount         Float
   date           String
   createdAt      DateTime @default(now())
   bill_type      String
   branchId       Int
-  billPhoto      String?  @db.LongText 
+  billPhoto      String?
   branch         branch   @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "Account_branchId_fkey")
 
   @@index([branchId], map: "Account_branchId_fkey")
