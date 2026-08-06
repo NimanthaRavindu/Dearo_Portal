@@ -88,10 +88,10 @@ const BranchDetailsClient = ({ branch, allRequests }: { branch: any, allRequests
                         <table className="w-full">
                             <tbody className="divide-y divide-slate-100">
                                 {accounts && accounts.length > 0 ? accounts.map((acc: any, index: number) => {
-                                    const docNo = acc.account_number ||!acc.account_number|| acc.acc_no || acc.accountNo;
+                                    const docNo = acc.account_number || acc.acc_no || acc.accountNo;
                                     return (
                                         <tr key={acc.id || index} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-6 py-5 font-bold text-slate-700">{docNo || ''}</td>
+                                            <td className="px-6 py-5 font-bold text-slate-700">{docNo || !acc.account_number}</td>
                                             <td className="px-6 py-5 text-right">
                                                 <button
                                                     onClick={() => handleRequest(docNo, "ACCOUNT")}
