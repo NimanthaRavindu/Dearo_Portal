@@ -64,7 +64,6 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     fetchDocuments();
   }, [type]);
 
-  // 2. Function: requesthistory වගුවේ status එක වෙනස් කිරීම (PATCH Request)
   const updateStatusAction = async (docNumber: string, action: "SUBMIT" | "DECLINE") => {
     const response = await fetch("/api/document-request", {
       method: "PATCH",
@@ -86,12 +85,18 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     return data;
   };
 
-  // 3. Main Action Function: Status වෙනස් කර documentRequest table එකෙන් delete කිරීම
   const deleteAction = async (documentId: number, rawDocNumber: string | undefined, action: "SUBMIT" | "DECLINE") => {
     if (isPending) return;
 
-    // docNumber එක Valid ද යන්න පරීක්ෂාව
-    const isValidDocNo = rawDocNumber && rawDocNumber !== "undefined" && rawDocNumber !== "N/A";
+
+    const isValidDocNo = Boolean(
+      rawDocNumber &&
+      rawDocNumber !== "" &&
+      rawDocNumber !== "undefined" &&
+      rawDocNumber !== "null" &&
+      rawDocNumber !== "N/A"
+    );
+
     const docText = isValidDocNo ? `${rawDocNumber} අංකය සහිත ` : "";
 
     const isConfirmed = window.confirm(
@@ -104,19 +109,17 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
 
     const previousData = [...dataList];
 
-    // UI එකෙන් ක්ෂණිකව ඉවත් කිරීම (Optimistic Update)
     setDataList((prev) => prev.filter((item) => item.id !== documentId));
 
     startTransition(async () => {
       try {
         setActionLoading(documentId);
 
-        // Valid Doc Number එකක් තියෙනවා නම් විතරක් PATCH request එක යැවීම
-        if (isValidDocNo) {
+
+        if (isValidDocNo && rawDocNumber) {
           await updateStatusAction(rawDocNumber, action);
         }
 
-        // පියවර 2: documentRequest table එකෙන් record එක delete කිරීම
         const response = await fetch("/api/documents/delete", {
           method: "POST",
           headers: {
@@ -139,11 +142,10 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
           return;
         }
 
-        // Response සාර්ථක නොවූයේ නම් UI Rollback කිරීම
         setDataList(previousData);
         alert(result.error || "ලේඛනය ඉවත් කිරීමට අපොහොසත් විය. කරුණාකර නැවත උත්සාහ කරන්න.");
       } catch (error: any) {
-        // Exception එකක් ආවොත් UI Rollback කිරීම සහ Error Alert එක පෙන්වීම
+    
         setDataList(previousData);
         alert("දෝෂයක් සිදු විය: " + (error.message || "කරුණාකර නැවත උත්සාහ කරන්න."));
       } finally {
@@ -209,20 +211,22 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
           <tbody className="divide-y divide-slate-100 italic">
             {dataList.length > 0 ? (
               dataList.map((doc) => {
-                const isValidDocNo = doc.docNumber && doc.docNumber !== "" ;
+                const isValidDocNo = Boolean(
+                  doc.docNumber &&
+                  doc.docNumber !== "" &&
+                  doc.docNumber !== "undefined" &&
+                  doc.docNumber !== "null" &&
+                  doc.docNumber !== "N/A"
+                );
 
                 return (
                   <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
-                    {/* Details */}
+              
                     <td className="px-10 py-7">
                       <div className="flex flex-col">
-                        {isValidDocNo ? (
+                        {isValidDocNo && (
                           <span className="font-black text-slate-700 text-sm">#{doc.docNumber}</span>
-                        ) : (
-                        
-                          <span className="font-bold text-slate-300 text-sm"></span>
                         )}
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">ID: {doc.id}</span>
                       </div>
                     </td>
 
@@ -279,7 +283,7 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
                         <button
                           onClick={() => deleteAction(doc.id, doc.docNumber, 'DECLINE')}
                           disabled={isPending || actionLoading === doc.id}
-                          className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 transition-all disabled:opacity-50"
+                          className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-[10px] uppercase flex items-center gap-1 transition-all disabled:opacity-50"
                         >
                           {actionLoading === doc.id ? (
                             <Loader2 size={12} className="animate-spin" />
