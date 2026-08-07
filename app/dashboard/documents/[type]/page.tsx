@@ -10,6 +10,7 @@ interface DocumentItem {
   docNumber?: string;
   documentType: string;
   status: string;
+  senderId?: number;
   createdAt: string;
 }
 
@@ -64,8 +65,7 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     fetchDocuments();
   }, [type]);
 
-  // 2. Function: requesthistory වගුවේ status එක වෙනස් කිරීම (PATCH Request)
-  const updateStatusAction = async (docNumber: string, action: "SUBMIT" | "DECLINE", docType: string) => {
+  const updateStatusAction = async (docNumber: string, action: "SUBMIT" | "DECLINE", docType: string, senderId?: number) => {
     const response = await fetch("/api/document-request", {
       method: "PATCH",
       headers: {
@@ -75,6 +75,7 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
         docNumber: docNumber || "",
         action: action,
         documentType: docType,
+        senderId: senderId, 
       }),
     });
 
@@ -87,8 +88,8 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     return data;
   };
 
-  // 3. Main Action Function: Status වෙනස් කර documentRequest table එකෙන් delete කිරීම
-  const deleteAction = async (documentId: number, rawDocNumber: string | undefined, action: "SUBMIT" | "DECLINE", docType: string) => {
+
+  const deleteAction = async (documentId: number, rawDocNumber: string | undefined, action: "SUBMIT" | "DECLINE", docType: string, senderId?: number) => {
     if (isPending) return;
 
     const isValidDocNo = Boolean(
@@ -111,17 +112,16 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
 
     const previousData = [...dataList];
 
-    // UI එකෙන් ක්ෂණිකව ඉවත් කිරීම (Optimistic Update)
+   
     setDataList((prev) => prev.filter((item) => item.id !== documentId));
 
     startTransition(async () => {
       try {
         setActionLoading(documentId);
 
-        // docNumber තිබුණත් නැතත් requesthistory update කිරීම සඳහා PATCH Request එක යැවීම
-        await updateStatusAction(rawDocNumber || "", action, docType || type);
+        await updateStatusAction(rawDocNumber || "", action, docType || type, senderId);
 
-        // documentRequest table එකෙන් record එක delete කිරීම
+
         const response = await fetch("/api/documents/delete", {
           method: "POST",
           headers: {
@@ -144,7 +144,6 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
           return;
         }
 
-        // Response සාර්ථක නොවූයේ නම් UI Rollback කිරීම
         setDataList(previousData);
         alert(result.error || "ලේඛනය ඉවත් කිරීමට අපොහොසත් විය. කරුණාකර නැවත උත්සාහ කරන්න.");
       } catch (error: any) {
@@ -268,7 +267,7 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
                       <div className="flex items-center justify-center gap-4">
                         {/* Submit Button */}
                         <button
-                          onClick={() => deleteAction(doc.id, doc.docNumber, 'SUBMIT', doc.documentType || type)}
+                          onClick={() => deleteAction(doc.id, doc.docNumber, 'SUBMIT', doc.documentType || type, doc.senderId)}
                           disabled={isPending || actionLoading === doc.id}
                           className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 transition-all disabled:opacity-50"
                         >
@@ -282,7 +281,7 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
 
                         {/* Decline Button */}
                         <button
-                          onClick={() => deleteAction(doc.id, doc.docNumber, 'DECLINE', doc.documentType || type)}
+                          onClick={() => deleteAction(doc.id, doc.docNumber, 'DECLINE', doc.documentType || type, doc.senderId)}
                           disabled={isPending || actionLoading === doc.id}
                           className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 transition-all disabled:opacity-50"
                         >

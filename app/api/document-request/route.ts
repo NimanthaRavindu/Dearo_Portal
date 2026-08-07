@@ -71,9 +71,11 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { docNumber, action, documentType } = body;
+    const { docNumber, action, documentType, senderId, branchId } = body;
 
-    console.log("PATCH Received Data:", { docNumber, action, documentType });
+    const targetBranchId = Number(senderId || branchId);
+
+    console.log("PATCH Received Data:", { docNumber, action, documentType, targetBranchId });
 
     if (!action) {
       return NextResponse.json(
@@ -94,12 +96,17 @@ export async function PATCH(req: Request) {
 
     let updatedCount = 0;
 
-    // 1. Valid referenceNo/docNumber එකක් තිබේ නම්
     if (safeDocNumber !== "") {
+      const whereCondition: any = {
+        referenceNo: safeDocNumber,
+      };
+
+      if (targetBranchId) {
+        whereCondition.branchId = targetBranchId;
+      }
+
       const updatedHistory = await prisma.requesthistory.updateMany({
-        where: {
-          referenceNo: safeDocNumber,
-        },
+        where: whereCondition,
         data: {
           status: newStatus,
         },
@@ -107,7 +114,7 @@ export async function PATCH(req: Request) {
       updatedCount = updatedHistory.count;
     }
 
-    // 2. docNumber එකක් නැති නම් හෝ referenceNo එකෙන් Record එකක් සොයා ගැනීමට නොහැකි වූයේ නම් (හිස් referenceNo සඳහා)
+   
     if (updatedCount === 0) {
       const docTypeVariants = documentType
         ? [
@@ -118,18 +125,25 @@ export async function PATCH(req: Request) {
           ]
         : [];
 
+      const whereCondition: any = {
+        OR: [
+          { referenceNo: "" },
+          { referenceNo: null },
+          { referenceNo: " " },
+        ],
+        ...(docTypeVariants.length > 0 && {
+          documentType: {
+            in: docTypeVariants,
+          },
+        }),
+      };
+
+      if (targetBranchId) {
+        whereCondition.branchId = targetBranchId;
+      }
+
       const updatedHistory = await prisma.requesthistory.updateMany({
-        where: {
-          OR: [
-            { referenceNo: "" },
-            { referenceNo: " " },
-          ],
-          ...(docTypeVariants.length > 0 && {
-            documentType: {
-              in: docTypeVariants,
-            },
-          }),
-        },
+        where: whereCondition,
         data: {
           status: newStatus,
         },
