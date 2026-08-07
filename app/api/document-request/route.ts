@@ -71,6 +71,8 @@ export async function PATCH(req: Request) {
     const body = await req.json();
     const { docNumber, action, documentType, senderId, branchId } = body;
 
+    console.log("PATCH Payload Received:", { docNumber, action, documentType, senderId, branchId });
+
     if (!action) {
       return NextResponse.json(
         { success: false, error: "action is required" },
@@ -102,51 +104,20 @@ export async function PATCH(req: Request) {
 
     let targetRecord = null;
 
-    
+    // 1. Account / Reference Number එකක් තිබේ නම්, ඒ අංකයට අදාළ මෑතකම (Latest) Record එක සොයයි
     if (safeDocNumber !== "") {
       targetRecord = await prisma.requesthistory.findFirst({
         where: {
           referenceNo: safeDocNumber,
           ...(validBranchId && { branchId: validBranchId }),
-          status: {
-            notIn: ["APPROVED", "DECLINED"],
-          },
         },
         orderBy: {
-          id: "asc",
+          id: "desc",
         },
       });
     }
 
-    if (!targetRecord) {
-      const whereClause: any = {
-        OR: [
-          { referenceNo: "" },
-          { referenceNo: " " },
-        ],
-        status: {
-          notIn: ["APPROVED", "DECLINED"],
-        },
-      };
-
-      if (validBranchId) {
-        whereClause.branchId = validBranchId;
-      }
-
-      if (docTypeVariants.length > 0) {
-        whereClause.documentType = {
-          in: docTypeVariants,
-        };
-      }
-
-      targetRecord = await prisma.requesthistory.findFirst({
-        where: whereClause,
-        orderBy: {
-          id: "asc",
-        },
-      });
-    }
-
+    // 2. Account Number එකක් නොමැති නම්, අදාළ Branch ID එකට සහ Document Type එකට ගැලපෙන මෑතකම (Latest) Record එක සොයයි
     if (!targetRecord && validBranchId) {
       targetRecord = await prisma.requesthistory.findFirst({
         where: {
@@ -156,18 +127,32 @@ export async function PATCH(req: Request) {
               in: docTypeVariants,
             },
           }),
-          status: {
-            notIn: ["APPROVED", "DECLINED"],
-          },
         },
         orderBy: {
-          id: "asc",
+          id: "desc",
         },
       });
     }
 
+    // 3. යම් හෙයකින් Branch ID එක නොමැති නම් Document Type එක පමණක් පදනම් කරගෙන මෑතකම Record එක සොයයි
+    if (!targetRecord && docTypeVariants.length > 0) {
+      targetRecord = await prisma.requesthistory.findFirst({
+        where: {
+          documentType: {
+            in: docTypeVariants,
+          },
+        },
+        orderBy: {
+          id: "desc",
+        },
+      });
+    }
+
+    console.log("Matched Target History Record:", targetRecord);
+
+    // 4. සුවිශේෂී තනි Record එක සාර්ථකව Update කරයි
     if (targetRecord) {
-      await prisma.requesthistory.update({
+      const updated = await prisma.requesthistory.update({
         where: {
           id: targetRecord.id,
         },
@@ -180,12 +165,13 @@ export async function PATCH(req: Request) {
         success: true,
         message: `Status updated to ${newStatus} for history ID ${targetRecord.id}`,
         updatedCount: 1,
+        updatedRecord: updated,
       });
     }
 
     return NextResponse.json({
-      success: true,
-      message: "No matching pending record found in requesthistory",
+      success: false,
+      error: "No matching record found in requesthistory",
       updatedCount: 0,
     });
   } catch (error: any) {
