@@ -91,40 +91,44 @@ export async function PATCH(req: Request) {
     const parsedBranchId = Number(senderId || branchId);
     const validBranchId = !isNaN(parsedBranchId) && parsedBranchId > 0 ? parsedBranchId : undefined;
 
-    let updatedCount = 0;
+    const docTypeVariants = documentType
+      ? [
+          documentType,
+          documentType.toUpperCase(),
+          documentType.toLowerCase(),
+          documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase(),
+        ]
+      : [];
+
+    let targetRecord = null;
+
 
     if (safeDocNumber !== "") {
-      try {
-        const updatedHistory = await prisma.requesthistory.updateMany({
-          where: {
-            referenceNo: safeDocNumber,
-            ...(validBranchId && { branchId: validBranchId }),
+      targetRecord = await prisma.requesthistory.findFirst({
+        where: {
+          referenceNo: safeDocNumber,
+          ...(validBranchId && { branchId: validBranchId }),
+          status: {
+            notIn: ["APPROVED", "DECLINED"],
           },
-          data: {
-            status: newStatus,
-          },
-        });
-        updatedCount = updatedHistory.count;
-      } catch (e) {
-        console.error("ReferenceNo Update Error:", e);
-      }
+        },
+        orderBy: {
+          id: "asc",
+        },
+      });
     }
 
-    if (updatedCount === 0) {
-      const docTypeVariants = documentType
-        ? [
-            documentType,
-            documentType.toUpperCase(),
-            documentType.toLowerCase(),
-            documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase(),
-          ]
-        : [];
-
+ 
+    if (!targetRecord) {
       const whereClause: any = {
         OR: [
           { referenceNo: "" },
           { referenceNo: " " },
+          { referenceNo: null },
         ],
+        status: {
+          notIn: ["APPROVED", "DECLINED"],
+        },
       };
 
       if (validBranchId) {
@@ -137,19 +141,54 @@ export async function PATCH(req: Request) {
         };
       }
 
-      const updatedHistory = await prisma.requesthistory.updateMany({
+      targetRecord = await prisma.requesthistory.findFirst({
         where: whereClause,
+        orderBy: {
+          id: "asc",
+        },
+      });
+    }
+
+    if (!targetRecord && validBranchId) {
+      targetRecord = await prisma.requesthistory.findFirst({
+        where: {
+          branchId: validBranchId,
+          ...(docTypeVariants.length > 0 && {
+            documentType: {
+              in: docTypeVariants,
+            },
+          }),
+          status: {
+            notIn: ["APPROVED", "DECLINED"],
+          },
+        },
+        orderBy: {
+          id: "asc",
+        },
+      });
+    }
+
+    if (targetRecord) {
+      await prisma.requesthistory.update({
+        where: {
+          id: targetRecord.id,
+        },
         data: {
           status: newStatus,
         },
       });
-      updatedCount = updatedHistory.count;
+
+      return NextResponse.json({
+        success: true,
+        message: `Status updated to ${newStatus} for history ID ${targetRecord.id}`,
+        updatedCount: 1,
+      });
     }
 
     return NextResponse.json({
       success: true,
-      message: `Status successfully updated to ${newStatus} in requesthistory`,
-      updatedCount: updatedCount,
+      message: "No matching pending record found in requesthistory",
+      updatedCount: 0,
     });
   } catch (error: any) {
     console.error("DATABASE PATCH ERROR:", error);

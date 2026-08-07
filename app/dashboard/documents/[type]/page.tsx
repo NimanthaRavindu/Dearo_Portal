@@ -65,7 +65,7 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     fetchDocuments();
   }, [type]);
 
- const updateStatusAction = async (docNumber: string, action: "SUBMIT" | "DECLINE", docType: string, senderId?: number) => {
+  const updateStatusAction = async (docNumber: string, action: "SUBMIT" | "DECLINE", docType: string, senderId?: number) => {
     const response = await fetch("/api/document-request", {
       method: "PATCH",
       headers: {
@@ -111,7 +111,6 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
 
     const previousData = [...dataList];
 
-   
     setDataList((prev) => prev.filter((item) => item.id !== documentId));
 
     startTransition(async () => {
@@ -119,7 +118,6 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
         setActionLoading(documentId);
 
         await updateStatusAction(rawDocNumber || "", action, docType || type, senderId);
-
 
         const response = await fetch("/api/documents/delete", {
           method: "POST",
