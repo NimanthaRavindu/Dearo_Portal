@@ -65,7 +65,7 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     fetchDocuments();
   }, [type]);
 
-  const updateStatusAction = async (docNumber: string, action: "SUBMIT" | "DECLINE", docType: string, senderId?: number) => {
+ const updateStatusAction = async (docNumber: string, action: "SUBMIT" | "DECLINE", docType: string, senderId?: number) => {
     const response = await fetch("/api/document-request", {
       method: "PATCH",
       headers: {
@@ -75,19 +75,18 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
         docNumber: docNumber || "",
         action: action,
         documentType: docType,
-        senderId: senderId, 
+        senderId: senderId,
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok || !data.success) {
-      throw new Error(data.error || "requesthistory හි status වෙනස් කිරීමට අපොහොසත් විය.");
+      throw new Error(data.details || data.error || "requesthistory හි status වෙනස් කිරීමට අපොහොසත් විය.");
     }
 
     return data;
   };
-
 
   const deleteAction = async (documentId: number, rawDocNumber: string | undefined, action: "SUBMIT" | "DECLINE", docType: string, senderId?: number) => {
     if (isPending) return;

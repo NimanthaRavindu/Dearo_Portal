@@ -30,8 +30,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { docNumber, documentType, branchId } = body;
 
-    console.log("POST Received Data:", { docNumber, documentType, branchId });
-
     if (!documentType) {
       return NextResponse.json(
         { error: "Missing required field: documentType" },
@@ -73,10 +71,6 @@ export async function PATCH(req: Request) {
     const body = await req.json();
     const { docNumber, action, documentType, senderId, branchId } = body;
 
-    const targetBranchId = Number(senderId || branchId);
-
-    console.log("PATCH Received Data:", { docNumber, action, documentType, targetBranchId });
-
     if (!action) {
       return NextResponse.json(
         { success: false, error: "action is required" },
@@ -94,27 +88,28 @@ export async function PATCH(req: Request) {
         ? String(docNumber).trim()
         : "";
 
+    const parsedBranchId = Number(senderId || branchId);
+    const validBranchId = !isNaN(parsedBranchId) && parsedBranchId > 0 ? parsedBranchId : undefined;
+
     let updatedCount = 0;
 
     if (safeDocNumber !== "") {
-      const whereCondition: any = {
-        referenceNo: safeDocNumber,
-      };
-
-      if (targetBranchId) {
-        whereCondition.branchId = targetBranchId;
+      try {
+        const updatedHistory = await prisma.requesthistory.updateMany({
+          where: {
+            referenceNo: safeDocNumber,
+            ...(validBranchId && { branchId: validBranchId }),
+          },
+          data: {
+            status: newStatus,
+          },
+        });
+        updatedCount = updatedHistory.count;
+      } catch (e) {
+        console.error("ReferenceNo Update Error:", e);
       }
-
-      const updatedHistory = await prisma.requesthistory.updateMany({
-        where: whereCondition,
-        data: {
-          status: newStatus,
-        },
-      });
-      updatedCount = updatedHistory.count;
     }
 
-   
     if (updatedCount === 0) {
       const docTypeVariants = documentType
         ? [
@@ -125,33 +120,31 @@ export async function PATCH(req: Request) {
           ]
         : [];
 
-      const whereCondition: any = {
+      const whereClause: any = {
         OR: [
           { referenceNo: "" },
-          { referenceNo: null },
           { referenceNo: " " },
         ],
-        ...(docTypeVariants.length > 0 && {
-          documentType: {
-            in: docTypeVariants,
-          },
-        }),
       };
 
-      if (targetBranchId) {
-        whereCondition.branchId = targetBranchId;
+      if (validBranchId) {
+        whereClause.branchId = validBranchId;
+      }
+
+      if (docTypeVariants.length > 0) {
+        whereClause.documentType = {
+          in: docTypeVariants,
+        };
       }
 
       const updatedHistory = await prisma.requesthistory.updateMany({
-        where: whereCondition,
+        where: whereClause,
         data: {
           status: newStatus,
         },
       });
       updatedCount = updatedHistory.count;
     }
-
-    console.log("Updated History Result Count:", updatedCount);
 
     return NextResponse.json({
       success: true,
@@ -163,7 +156,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to update status in requesthistory",
+        error: error.message || "Failed to update status in requesthistory",
         details: error.message,
       },
       { status: 500 }
