@@ -102,7 +102,7 @@ export async function PATCH(req: Request) {
 
     let targetRecord = null;
 
-
+    
     if (safeDocNumber !== "") {
       targetRecord = await prisma.requesthistory.findFirst({
         where: {
@@ -118,13 +118,11 @@ export async function PATCH(req: Request) {
       });
     }
 
- 
     if (!targetRecord) {
       const whereClause: any = {
         OR: [
           { referenceNo: "" },
           { referenceNo: " " },
-          { referenceNo: null },
         ],
         status: {
           notIn: ["APPROVED", "DECLINED"],
