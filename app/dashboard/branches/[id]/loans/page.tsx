@@ -60,6 +60,7 @@ export default async function LoanPage({ params }: { params: Promise<{ id: strin
             <option value="Micro">Micro</option>
             <option value="Daily">Daily</option>
             <option value="Business">Business</option>
+            <option value="Share Purchase">Share Purchase</option>
           </select>
           <button type="submit" className="col-span-full bg-green-600 text-white p-2 rounded-lg font-bold hover:bg-green-700">Submit Document</button>
         </form>
