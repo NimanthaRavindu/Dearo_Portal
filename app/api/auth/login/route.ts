@@ -1,12 +1,26 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db"; // Prisma client eka import karaganna
+import { prisma } from "@/lib/db";
 
 export const maxDuration = 30;
 export const dynamic = 'force-dynamic';
 
+// 💡 Connection dropped error එකක් ආවොත් automatically reconnect කරලා query එක retry කරන helper එකක්
+async function executeWithRetry<T>(operation: () => Promise<T>, retries = 2): Promise<T> {
+    try {
+        return await operation();
+    } catch (error: any) {
+        if (retries > 0 && (error?.message?.includes('closed') || error?.code === 'P1001' || error?.code === 'P1002')) {
+            console.warn(`Database connection dropped. Retrying... (${retries} attempts left)`);
+            // සම්බන්ධතාවය අලුත් කර ගැනීමට කෙටි διάστημαක් රැඳී සිටීම
+            await new Promise(res => setTimeout(res, 1000));
+            return executeWithRetry(operation, retries - 1);
+        }
+        throw error;
+    }
+}
+
 export async function POST(request: Request) {
     try {
-
         const body = await request.json();
         const { nic, password } = body; 
 
@@ -17,14 +31,15 @@ export async function POST(request: Request) {
             );
         }
 
-        // 💡 mysql2 wenuwata Prisma use karala database eken user wa hoyaganna
-        // (Oyaage Prisma schema eke model eke nama 'user' nathnam 'User' wennath puluwan, poddak check karanna)
-        const user = await prisma.user.findFirst({
-            where: {
-                nic: nic,
-                password: password
-            }
-        });
+        // 💡 Retry logic එක හරහා user ව query කිරීම
+        const user = await executeWithRetry(() => 
+            prisma.user.findFirst({
+                where: {
+                    nic: nic,
+                    password: password
+                }
+            })
+        );
 
         if (user) {
             return NextResponse.json(
@@ -48,10 +63,10 @@ export async function POST(request: Request) {
             );
         }
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Login API Error:", error);
         return NextResponse.json(
-            { error: "Internal Server Error. Please try again later." },
+            { success: false, message: "Server connection error. Please try again.", error: error.message },
             { status: 500 }
         );
     }
