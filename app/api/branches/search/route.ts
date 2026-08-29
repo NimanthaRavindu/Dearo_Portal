@@ -25,7 +25,7 @@ export async function GET(req: Request) {
         ],
       },
       select: {
-        branchId: true,
+        id: true,             // branchId wenuwata id dama aethi
         branch_name: true,
         branch_code: true,
       },
