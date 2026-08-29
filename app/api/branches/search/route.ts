@@ -1,20 +1,39 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/db";
 
-export  async function GET(req:Request){
+export async function GET(req: Request) {
   try {
-    const {searchParams} = new URL(req.url);
+    const { searchParams } = new URL(req.url);
     const queryTerm = searchParams.get('q');
 
     if (!queryTerm) return NextResponse.json([]);
-    
 
-    const sql = "SELECT  branchId,branch_name,branch_code FROM branch WHERE branch_name LIKE ? OR branch_code LIKE ? ";
-    const [rows] = await db.execute(sql,['%${queryTerm}%','%${queryTerm}%']);
+    // 💡 Prisma use karala LIKE query eka liyana widiha
+    const branches = await prisma.branch.findMany({
+      where: {
+        OR: [
+          {
+            branch_name: {
+              contains: queryTerm,
+            },
+          },
+          {
+            branch_code: {
+              contains: queryTerm,
+            },
+          },
+        ],
+      },
+      select: {
+        branchId: true,
+        branch_name: true,
+        branch_code: true,
+      },
+    });
 
-    return NextResponse.json(rows);
+    return NextResponse.json(branches);
   } catch (error) {
+    console.error("Branch Search Error:", error);
     return NextResponse.json([]);
-  }  
-  
+  }
 }

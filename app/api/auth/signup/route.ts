@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, nic, email, password } = body;
+    const { name, nic, email, password, branchId } = body;
 
   
     if (!name || !nic || !email || !password) {
@@ -13,27 +13,34 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
- 
-    await prisma.$executeRawUnsafe(
-      `INSERT INTO User (name, nic, email, password,branchId) 
-       VALUES (?, ?, ?, ?, ?)`,
-      name, 
-      nic, 
-      email, 
-      password,
-      'USER', 
-      1,
-       
-    );
+
+    // 💡 Prisma native create method 
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        nic,
+        email,
+        password, // (Note: Production එකේදී password එක Hashing (bcrypt) කර දීම ආරක්ෂිතයි)
+        branchId: branchId ? Number(branchId) : 1, // Default branchId එක 1 ලෙස හෝ body එකෙන් එන අගය ලබා දීම
+      },
+    });
 
     return NextResponse.json(
-      { message: "පරිශීලකයා සාර්ථකව ඇතුළත් කරන ලදී." },
+      { message: "පරිශීලකයා සාර්ථකව ඇතුළත් කරන ලදී.", user: newUser },
       { status: 201 }
     );
 
   } catch (error: any) {
-    console.error("SQL_INSERT_ERROR:", error);
+    console.error("SIGNUP_API_ERROR:", error);
     
+   
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { error: "ഈ NIC හෝ Email එක දැනටමත් භාවිතයේ ඇත." },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Internal Server Error", details: error.message },
       { status: 500 }
