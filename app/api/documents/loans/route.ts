@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-
+import { prisma } from "@/lib/db";
 
 export async function GET() {
-    
     try {
-        const query = 'SELECT type,COUNT(*) as count FROM loan GROUP BY type';
-        const [rows] : any = await db.execute(query);
+        const rows = await (prisma.loan.groupBy as any)({
+            by: ['type'],
+            _count: {
+                id: true,
+            },
+        });
 
-        return NextResponse.json({success:true,data:rows});
+        const formattedData = rows.map((item: any) => ({
+            type: item.type,
+            count: item._count.id || item._count._all || 0,
+        }));
 
-    } catch (error : any) {
-        return NextResponse.json({success:false,error:error.message},{status:500});
+        return NextResponse.json({success:true, data: formattedData});
+    } catch (error: any) {
+        return NextResponse.json({success:false, error: error.message},{status:500});
     }
-  
 }
