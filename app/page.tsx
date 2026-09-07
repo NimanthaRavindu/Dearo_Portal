@@ -14,15 +14,13 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const [isAdmin,setIsAdmin] =  useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
-    const handleLogin = async (e:React.FormEvent) => {
-    
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
-        // 1. Client-side Validation
         if (!nic || nic.length < 10) {
             setError('කරුණාකර නිවැරදි NIC අංකයක් ඇතුළත් කරන්න.');
             setLoading(false);
@@ -36,10 +34,8 @@ export default function LoginPage() {
         }
 
         try {
-            
             const response = await fetch("/api/auth/login", {
                 method: 'POST',
-                
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -56,8 +52,6 @@ export default function LoginPage() {
                     email: data.user.email,
                     createdAt: data.user.createdAt,
                 }));
-
-                
                 router.push('/dashboard');
             } else {
                 setError(data.message || 'පද්ධතියට ඇතුළු වීමට නොහැක.');
@@ -69,7 +63,7 @@ export default function LoginPage() {
         }
     };
 
-    const onNicChange = (e:React.ChangeEvent<HTMLInputElement>) =>{
+    const onNicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
         setNic(val);
 
@@ -78,24 +72,25 @@ export default function LoginPage() {
         } else {
             setIsAdmin(false);
         }
-    }
+    };
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center p-6 overflow-hidden antialiased">
-            {/* Background Layer */}
-            <div className="absolute inset-0 z-0">
+        <div className="relative w-full h-screen flex items-center justify-center p-6 overflow-hidden antialiased">
+            {/* Background Layer - FIXED */}
+            <div className="absolute inset-0 w-full h-full -z-10">
                 <Image
                     src="/back.gif"
                     alt="Animated Background"
                     fill
-                    className="object-cover fixed"
+                    sizes="100vw"
+                    className="object-cover"
                     priority
                 />
-                <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] z-10" />
+                <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" />
             </div>
 
             {/* Login Card */}
-            <div className="relative z-20 bg-white/80 backdrop-blur-2xl p-10 md:p-12 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-white/20">
+            <div className="relative z-20 bg-white/85 backdrop-blur-2xl p-10 md:p-12 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-white/20">
                 <div className="text-center mb-8">
                     <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-200 ring-4 ring-white">
                         <Image src="/dearo2.png" alt="Dearo Logo" width={50} height={50} className="object-contain" />
@@ -111,8 +106,7 @@ export default function LoginPage() {
                     </div>
                 )}
 
-                
-                <form className="space-y-5" >
+                <form className="space-y-5" onSubmit={handleLogin}>
                     <div>
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identity (NIC)</label>
                         <div className="relative mt-1.5">
@@ -152,8 +146,7 @@ export default function LoginPage() {
                     </div>
 
                     <button
-                        type="button"
-                        onClick={handleLogin}
+                        type="submit"
                         disabled={loading}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4.5 rounded-2xl shadow-xl shadow-blue-100 transition disabled:opacity-50"
                     >
@@ -161,20 +154,19 @@ export default function LoginPage() {
                     </button>
                 </form>
 
-            {isAdmin && (
-                <div className="mt-8 text-center">
-                    <p className="text-sm text-slate-500">Don't have an account?</p>
-                    <Link href="/signup" className="text-sm font-bold text-blue-600 hover:text-blue-700">
-                        Create New Account for User...
-                    </Link>
-                </div>
-
-            )}    
+                {isAdmin && (
+                    <div className="mt-8 text-center">
+                        <p className="text-sm text-slate-500">Don't have an account?</p>
+                        <Link href="/signup" className="text-sm font-bold text-blue-600 hover:text-blue-700">
+                            Create New Account for User...
+                        </Link>
+                    </div>
+                )}
             </div>
-           
-            <footer className="absolute bottom-6 text-center">
-                <p className="text-[10px] font-bold text-slate-400 flex items-center justify-center gap-1">
-                    <CheckCircle2 size={12} className="text-blue-500" /> Authorized Access Only
+
+            <footer className="absolute bottom-6 text-center z-20">
+                <p className="text-[10px] font-bold text-white/70 flex items-center justify-center gap-1">
+                    <CheckCircle2 size={12} className="text-blue-400" /> Authorized Access Only
                 </p>
             </footer>
         </div>
