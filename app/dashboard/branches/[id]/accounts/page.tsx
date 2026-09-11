@@ -30,11 +30,10 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
   async function addAccount(formData: FormData) {
     "use server";
     
-    // 🎯 1. Account Number එක sanitize කිරීම ("" එකක් ආවොත් strictly null කිරීම)
+  
     const rawAccNo = formData.get("accNo") as string;
     const accNo = rawAccNo && rawAccNo.trim() !== "" ? rawAccNo.trim() : null;
 
-    // 🎯 2. Hidden inputs මඟින් එවන ලද Base64 දත්ත ලබා ගැනීම
     const base64Data = formData.get("billPhotoBase64") as string;
     let cloudinaryUrl = "";
 
@@ -62,10 +61,10 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
       }
     }
 
-    // 🎯 3. Database එකට දත්ත ඇතුළත් කිරීම (account_number එක null ලෙස යයි)
+ 
     await prisma.account.create({
       data: {
-        account_number: accNo, // 👈 empty string ("") වෙනුවට strictly null යවයි
+        account_number: accNo, 
         customer_name: formData.get("custNo") as string,
         bill_type: formData.get("billtype") as string,
         amount: parseFloat(formData.get("amount") as string),
@@ -103,7 +102,6 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
             <option value="Telephone Bill">Telephone Bill</option>
             <option value="Router Bill">Router Bill</option>
             <option value="Courier Bill">Courier Bill</option>
-            <option value="Petty Cash">Petty Cash</option>
             <option value="Vehicle Bill">Vehicle Bill</option>
             <option value="IOU Bill">IOU Bill</option>
             <option value="Other">Other</option>
