@@ -109,6 +109,7 @@ export default async function SignupPage() {
                 type="email"
                 placeholder="john.d@example.com"
                 className="w-full bg-[#111c44]/50 border border-slate-800 focus:border-blue-500 text-white rounded-xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-600"
+                autoComplete="one-time-code"
                 required
               />
             </div>
@@ -170,6 +171,7 @@ export default async function SignupPage() {
                 type="password"
                 placeholder="••••••••"
                 className="w-full bg-[#111c44]/50 border border-slate-800 focus:border-blue-500 text-white rounded-xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-600"
+                autoComplete="new-password"
                 required
               />
             </div>
