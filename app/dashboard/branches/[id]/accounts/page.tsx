@@ -102,7 +102,6 @@ revalidatePath(`/dashboard/branches/${branchId}/accounts`);
             <option value="Router Bill">Router Bill</option>
             <option value="Courier Bill">Courier Bill</option>
             <option value="Vehicle Bill">Vehicle Bill</option>
-            <option value="Petty Cash">Petty Cash</option>
             <option value="IOU Bill">IOU Bill</option>
             <option value="Other">Other</option>
           </select>
