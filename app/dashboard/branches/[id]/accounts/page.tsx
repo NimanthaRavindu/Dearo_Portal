@@ -31,50 +31,49 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
     "use server";
     
   
-    const rawAccNo = formData.get("accNo") as string;
-    const accNo = rawAccNo && rawAccNo.trim() !== "" ? rawAccNo.trim() : null;
+  const rawAccNo = formData.get("accNo") as string;
+const accNo = rawAccNo && rawAccNo.trim() !== "" ? rawAccNo.trim() : "";
 
-    const base64Data = formData.get("billPhotoBase64") as string;
-    let cloudinaryUrl = "";
+const base64Data = formData.get("billPhotoBase64") as string;
+let cloudinaryUrl = "";
 
-    if (base64Data) {
-      try {
-        const base64Image = base64Data.split(';base64,').pop();
-        
-        if (base64Image) {
-          const buffer = Buffer.from(base64Image, 'base64');
-          
-          const uploadResult = await new Promise((resolve, reject) => {
-            cloudinary.uploader.upload_stream(
-              { folder: "dearo_bills" },
-              (error, result) => {
-                if (error) reject(error);
-                else resolve(result);
-              }
-            ).end(buffer);
-          });
+if (base64Data) {
+  try {
+    const base64Image = base64Data.split(';base64,').pop();
+    
+    if (base64Image) {
+      const buffer = Buffer.from(base64Image, 'base64');
+      
+      const uploadResult = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: "dearo_bills" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(buffer);
+      });
 
-          cloudinaryUrl = (uploadResult as any).secure_url;
-        }
-      } catch (uploadError) {
-        console.error("Cloudinary upload failed:", uploadError);
-      }
+      cloudinaryUrl = (uploadResult as any).secure_url;
     }
+  } catch (uploadError) {
+    console.error("Cloudinary upload failed:", uploadError);
+  }
+}
 
- 
-    await prisma.account.create({
-      data: {
-        account_number: accNo, 
-        customer_name: formData.get("custNo") as string,
-        bill_type: formData.get("billtype") as string,
-        amount: parseFloat(formData.get("amount") as string),
-        date: formData.get("date") as string,
-        branchId: branchId,
-        billPhoto: cloudinaryUrl || null,
-      }
-    });
+await prisma.account.create({
+  data: {
+    account_number: accNo, 
+    customer_name: formData.get("custNo") as string,
+    bill_type: formData.get("billtype") as string,
+    amount: parseFloat(formData.get("amount") as string),
+    date: formData.get("date") as string,
+    branchId: branchId,
+    billPhoto: cloudinaryUrl || null,
+  }
+});
 
-    revalidatePath(`/dashboard/branches/${branchId}/accounts`);
+revalidatePath(`/dashboard/branches/${branchId}/accounts`);
   }
 
   return (
