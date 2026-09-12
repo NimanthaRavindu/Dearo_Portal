@@ -102,7 +102,6 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
             <option value="Router Bill">Router Bill</option>
             <option value="Courier Bill">Courier Bill</option>
             <option value="Vehicle Bill">Vehicle Bill</option>
-            <option value="Vehicle Bill">Petty Cash</option>
             <option value="IOU Bill">IOU Bill</option>
             <option value="Other">Other</option>
           </select>
