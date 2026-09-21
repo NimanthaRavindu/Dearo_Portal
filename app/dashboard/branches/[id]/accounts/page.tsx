@@ -6,7 +6,6 @@ import ViewDocButton from "@/components/ViewDocButton";
 import BillPhotoUploadPage from "@/components/BillPhotoUpload";
 import { v2 as cloudinary } from "cloudinary";
 
-// ☁️ Cloudinary Configuration
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -30,9 +29,9 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
   async function addAccount(formData: FormData) {
     "use server";
     
-      
+
     const rawAccNo = formData.get("accNo") as string;
-    const accNo = rawAccNo && rawAccNo.trim() !== "" ? rawAccNo.trim() : "";
+    const accNo = rawAccNo && rawAccNo.trim() !== "" ? rawAccNo.trim() : null;
 
     const base64Data = formData.get("billPhotoBase64") as string;
     let cloudinaryUrl = "";
@@ -91,7 +90,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
         </h2>
         
         <form action={addAccount} className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <input name="accNo" placeholder="Account Number" className="border p-2 rounded-lg text-sm" />
+          <input name="accNo" placeholder="Account Number (Optional)" className="border p-2 rounded-lg text-sm" />
           <input name="custNo" placeholder="Customer Name" className="border p-2 rounded-lg text-sm" required />
           
           <select name="billtype" className="border p-2 rounded-lg text-sm bg-white" required>
@@ -103,6 +102,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
             <option value="Courier Bill">Courier Bill</option>
             <option value="Vehicle Bill">Vehicle Bill</option>
             <option value="IOU Bill">IOU Bill</option>
+            <option value="Petty Cash">Petty Cash</option>
             <option value="Other">Other</option>
           </select>
 
@@ -139,7 +139,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
           <tbody>
             {branch?.account.map((acc) => (
               <tr key={acc.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                <td className="p-4 text-sm font-medium text-slate-700">{acc.account_number ?? ""}</td>
+                <td className="p-4 text-sm font-medium text-slate-700">{acc.account_number ?? "N/A"}</td>
                 <td className="p-4 text-sm">
                   <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-xs font-bold uppercase">
                     {acc.bill_type}
