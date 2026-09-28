@@ -10,9 +10,9 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
   const branchId = parseInt(resolvedParams.id);
 
   if (isNaN(branchId)) {
-    return <div>Invalid Branch ID in  URL</div>;
+    return <div>Invalid Branch ID in URL</div>;
   }
-  
+
   const branch = await prisma.branch.findUnique({
     where: { id: branchId },
     include: { investment: true }
@@ -24,6 +24,7 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
       data: {
         contract_no: formData.get("cNo") as string,
         amount: parseFloat(formData.get("amount") as string),
+        reason: formData.get("reason") as string, // NEW FIELD ADDED
         branchId: branchId,
       }
     });
@@ -36,7 +37,6 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
         <ArrowLeft size={18} /> Back to Dashboard
       </Link>
 
-      
       <h1 className="text-2xl font-bold">{branch?.branch_name} - Investments Documents</h1>
 
       <div className="bg-white p-6 rounded-xl border shadow-sm">
@@ -44,6 +44,7 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
         <form action={addInvestment} className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <input name="cNo" placeholder="Contract_Number" className="border p-2 rounded-lg" required />
           <input name="amount" type="number" placeholder="Amount" className="border p-2 rounded-lg" required />
+          <input name="reason" placeholder="Reason" className="border p-2 rounded-lg" required />
           <button type="submit" className="col-span-full bg-orange-600 text-white p-2 rounded-lg font-bold">Add Investment</button>
         </form>
       </div>
@@ -54,14 +55,16 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
             <tr>
               <th className="p-4">Contract No</th>
               <th className="p-4">Amount</th>
+              <th className="p-4">Reason</th>
               <th className="p-4">Action</th>
             </tr>
           </thead>
           <tbody>
-            {branch?.investment.map((inv) => (
+            {branch?.investment.map((inv: any) => (
               <tr key={inv.id} className="border-b">
                 <td className="p-4">{inv.contract_no}</td>
                 <td className="p-4">Rs. {inv.amount.toLocaleString()}</td>
+                <td className="p-4">{inv.reason || "-"}</td>
                 <td className="p-4">
                   <ViewDocButton branchId={branchId} type="Investment" refNo={inv.contract_no} link={`/dashboard/branches/${branchId}/investments/${inv.id}`}/>
                 </td>
