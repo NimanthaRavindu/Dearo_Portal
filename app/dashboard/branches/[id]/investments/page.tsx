@@ -53,7 +53,7 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
         <table className="w-full text-left">
           <thead className="bg-slate-50 border-b">
             <tr>
-              <th className="p-4">Contract No</th>
+              <th className="p-4">Certificate No</th>
               <th className="p-4">Amount</th>
               <th className="p-4">Reason</th>
               <th className="p-4">Action</th>
