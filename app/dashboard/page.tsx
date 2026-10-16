@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-
+import DashboardBranchFilter from "@/components/DashboardBranchFilter";
 
 export default async function DashboardPage() {
   const branches = await prisma.branch.findMany({
@@ -48,5 +48,5 @@ export default async function DashboardPage() {
     { label: "Total Investments", value: totalInvestments, color: "text-cyan-600", bg: "bg-cyan-50", href: "/dashboard/documents/INVESTMENT" },
   ];
 
-  
+  return <DashboardBranchFilter branches={branchesPlain} stats={stats} />;
 }
