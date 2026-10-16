@@ -1,14 +1,7 @@
 import { prisma } from "@/lib/db";
-import DashboardBranchFilter from "@/components/DashboardBranchFilter";
 
-type Props = {
-  searchParams?: Promise<{ branchId?: string }>;
-};
 
-export default async function DashboardPage({ searchParams }: Props) {
-  const resolvedParams = await searchParams;
-  const selectedBranchIdFromUrl = resolvedParams?.branchId ? parseInt(resolvedParams.branchId) : null;
-
+export default async function DashboardPage() {
   const branches = await prisma.branch.findMany({
     include: {
       _count: {
@@ -20,7 +13,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         },
       },
     },
-    orderBy: { branch_name: 'asc' },
+    orderBy: { branch_name: 'asc' }
   });
 
   const totalAccounts = await prisma.documentrequest.count({
@@ -35,8 +28,9 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   const totalSystemDocuments = totalAccounts + totalLoans + totalInvestments;
 
-  const branchesPlain = branches.map((b) => ({
-    id: String(b.id),
+  // Plain objects for client
+  const branchesPlain = branches.map(b => ({
+    id: b.id,
     branch_name: b.branch_name,
     branch_code: b.branch_code,
     account: b._count.account,
@@ -54,5 +48,5 @@ export default async function DashboardPage({ searchParams }: Props) {
     { label: "Total Investments", value: totalInvestments, color: "text-cyan-600", bg: "bg-cyan-50", href: "/dashboard/documents/INVESTMENT" },
   ];
 
-  return <DashboardBranchFilter branches={branchesPlain} stats={stats} initialBranchId={selectedBranchIdFromUrl ? String(selectedBranchIdFromUrl) : ""} />;
+  
 }
