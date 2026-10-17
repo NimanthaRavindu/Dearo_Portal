@@ -25,19 +25,21 @@ export default async function DashboardPage({ searchParams }: Props) {
     orderBy: { branch_name: 'asc' }
   });
 
+  // FIXED: branch relation එකෙන් filter කරනවා, branchId නෙවෙයි
+  const branchFilter = selectedBranchId ? { branch: { id: selectedBranchId } } : {};
+
   const totalAccounts = await prisma.documentrequest.count({
-    where: { documentType: "ACCOUNT", ...(selectedBranchId ? { branchId: selectedBranchId } : {}) },
+    where: { documentType: "ACCOUNT", ...branchFilter },
   });
   const totalLoans = await prisma.documentrequest.count({
-    where: { documentType: "LOAN", ...(selectedBranchId ? { branchId: selectedBranchId } : {}) },
+    where: { documentType: "LOAN", ...branchFilter },
   });
   const totalInvestments = await prisma.documentrequest.count({
-    where: { documentType: "INVESTMENT", ...(selectedBranchId ? { branchId: selectedBranchId } : {}) },
+    where: { documentType: "INVESTMENT", ...branchFilter },
   });
 
   const totalSystemDocuments = totalAccounts + totalLoans + totalInvestments;
 
-  // Filtered branches for chart
   const displayBranches = selectedBranchId ? branches.filter(b => b.id === selectedBranchId) : branches;
   const selectedBranch = selectedBranchId ? branches.find(b => b.id === selectedBranchId) : null;
 
@@ -51,48 +53,33 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   return (
     <div className="p-8 space-y-6 bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-300">
-
-      {/* BRANCH FILTER BAR - No extra component needed */}
+      
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col md:flex-row gap-4 justify-between items-center">
         <div>
           <h2 className="font-bold text-sm text-slate-900 dark:text-white">Branch Filter</h2>
           <p className="text-xs text-slate-500">{selectedBranch ? `Showing ${selectedBranch.branch_name} (${selectedBranch.branch_code})` : `All ${branches.length} branches`}</p>
         </div>
         <form method="GET" className="flex items-center gap-2">
-          <select
-            name="branchId"
-            defaultValue={selectedBranchId ? String(selectedBranchId) : ""}
-            className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white min-w-[200px]"
-          >
+          <select name="branchId" defaultValue={selectedBranchId ? String(selectedBranchId) : ""} className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium bg-white min-w-[200px]">
             <option value="">All Branches</option>
             {branches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.branch_name} - {b.branch_code}
-              </option>
+              <option key={b.id} value={b.id}>{b.branch_name} - {b.branch_code}</option>
             ))}
           </select>
-          <button type="submit" className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700">
-            Filter
-          </button>
+          <button type="submit" className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700">Filter</button>
           {selectedBranchId && (
-            <Link href="/dashboard" className="px-4 py-2.5 rounded-xl bg-red-50 text-red-600 border border-red-100 text-sm font-bold">
-              Clear
-            </Link>
+            <Link href="/dashboard" className="px-4 py-2.5 rounded-xl bg-red-50 text-red-600 border border-red-100 text-sm font-bold">Clear</Link>
           )}
         </form>
       </div>
 
-      {/* Stats */}
       <DashboardStats stats={stats} branches={displayBranches} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">
-            File Distribution by Branch {selectedBranch && <span className="text-blue-600">- {selectedBranch.branch_name}</span>}
-          </h3>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">File Distribution by Branch {selectedBranch && <span className="text-blue-600">- {selectedBranch.branch_name}</span>}</h3>
           <MainDashboardCharts branches={displayBranches} />
         </div>
-
         <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
           <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Branch Directory ({displayBranches.length})</h3>
           <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
@@ -100,11 +87,7 @@ export default async function DashboardPage({ searchParams }: Props) {
               const totalBranchFiles = branch._count.account + branch._count.loan + branch._count.investment;
               const isSelected = selectedBranchId === branch.id;
               return (
-                <Link
-                  key={branch.id}
-                  href={`/dashboard?branchId=${branch.id}`}
-                  className={`flex items-center justify-between p-4 rounded-xl transition-colors ${isSelected ? "bg-blue-600 text-white shadow-lg" : "bg-slate-50 hover:bg-slate-100"}`}
-                >
+                <Link key={branch.id} href={`/dashboard?branchId=${branch.id}`} className={`flex items-center justify-between p-4 rounded-xl transition-colors ${isSelected ? "bg-blue-600 text-white shadow-lg" : "bg-slate-50 hover:bg-slate-100"}`}>
                   <div>
                     <p className={`font-semibold ${isSelected ? "text-white" : "text-slate-800"}`}>{branch.branch_name}</p>
                     <p className={`text-xs ${isSelected ? "text-blue-100" : "text-slate-500"}`}>{branch.branch_code}</p>
