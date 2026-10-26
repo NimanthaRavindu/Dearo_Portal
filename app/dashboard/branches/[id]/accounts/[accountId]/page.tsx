@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { ArrowLeft, User, CreditCard, Image as ImageIcon, Calendar, Landmark } from "lucide-react";
 import Link from "next/link";
-import PrintButton from "@/components/PrintButton";
+import AccountPDFButtons from "@/components/AccountPDFButtons";
 
 export default async function AccountDocumentPage({ 
   params 
@@ -24,7 +24,6 @@ export default async function AccountDocumentPage({
 
   if (!account) return notFound();
 
-  // Helper to ensure path renders correctly (Handles relative paths & Base64 Data URLs)
   const getImageSrc = (pathStr: string) => {
     if (pathStr.startsWith('data:image/') || pathStr.startsWith('http://') || pathStr.startsWith('https://')) {
       return pathStr;
@@ -35,25 +34,27 @@ export default async function AccountDocumentPage({
 
   return (
     <div className="p-0 md:p-10 bg-slate-100 min-h-screen print:bg-white">
-      {/* Back Button */}
       <Link 
         href={`/dashboard/branches/${branchId}/accounts`}
-        className="flex items-center gap-2 text-blue-600 font-bold hover:underline print:hidden mb-4">
+        className="flex items-center gap-2 text-blue-600 font-bold hover:underline print:hidden mb-4 ml-4 md:ml-0">
           <ArrowLeft size={18}/>Back to Account List
       </Link>
 
-      {/* Action Bar */}
-      <div className="max-w-4xl mx-auto mb-6 flex justify-end p-4 print:hidden">
-        <PrintButton />
+      <div className="max-w-4xl mx-auto mb-6 flex justify-end print:hidden p-4">
+        <AccountPDFButtons account={{
+          id: account.id,
+          customer_name: account.customer_name ?? undefined,
+          account_number: account.account_number ?? "",
+          bill_type: account.bill_type ?? undefined,
+          amount: account.amount,
+          billPhoto: account.billPhoto ?? undefined,
+          branch_name: account.branch?.branch_name ?? undefined
+        }} />
       </div>
 
-      {/* Main Account Document Statement */}
-      <div className="max-w-4xl mx-auto bg-white shadow-2xl border border-slate-200 min-h-[1050px] p-12 relative print:shadow-none print:border-none print:p-0">
-        
-        {/* Top Accent Bar */}
+      <div id="print-area" className="max-w-4xl mx-auto bg-white shadow-2xl border border-slate-200 min-h-[1050px] p-12 relative print:shadow-none print:border-none print:p-0">
         <div className="absolute top-0 left-0 w-full h-2 bg-blue-900 print:hidden"></div>
 
-        {/* Header */}
         <div className="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-10">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -76,10 +77,7 @@ export default async function AccountDocumentPage({
           </div>
         </div>
 
-        {/* Document Body */}
         <div className="space-y-12">
-          
-          {/* Section 01: Account Holder Details */}
           <div>
             <h2 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] mb-6 border-b border-blue-50 pb-2">
               01. Account Holder Information
@@ -102,7 +100,6 @@ export default async function AccountDocumentPage({
             </div>
           </div>
 
-          {/* Section 02: Account Summary */}
           <div className="bg-slate-50 rounded-2xl p-8 border border-slate-100 print:bg-white print:border-slate-200">
             <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-6 border-b border-slate-200 pb-2">
               02. Account Summary
@@ -123,12 +120,10 @@ export default async function AccountDocumentPage({
             </div>
           </div>
 
-          {/* Section 03: Uploaded Bill Attachment Display */}
           <div className="pt-4 border-t border-slate-100 space-y-3">
             <h3 className="text-xs font-black text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
               <ImageIcon size={14}/>03. Uploaded Bill Attachment
             </h3>
-
             {account.billPhoto ? (
               <div className="mt-2 border border-slate-200 rounded-xl overflow-hidden bg-slate-50 p-2 max-w-md shadow-inner">
                 <img 
@@ -144,20 +139,18 @@ export default async function AccountDocumentPage({
             )}
           </div>
 
-          {/* Dates */}
           <div className="grid grid-cols-2 gap-8">
             <div className="flex items-center gap-4">
                <Calendar size={20} className="text-slate-300" />
                <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase">Statement Date</p>
                   <p className="text-sm font-bold text-slate-700">
-                    {account.date || new Date(account.createdAt || Date.now()).toLocaleDateString()}
+                    {account.date || new Date((account as any).createdAt || Date.now()).toLocaleDateString()}
                   </p>
                </div>
             </div>
           </div>
 
-          {/* Signatures */}
           <div className="pt-24 grid grid-cols-2 gap-20 text-center">
             <div>
               <div className="border-b border-slate-300 mb-2 h-10"></div>
@@ -168,10 +161,8 @@ export default async function AccountDocumentPage({
               <p className="text-[10px] font-bold text-slate-400 uppercase">Account Holder Signature</p>
             </div>
           </div>
-
         </div>
 
-        {/* Document Footer */}
         <div className="absolute bottom-10 left-12 right-12 border-t border-slate-100 pt-6 flex justify-between items-center text-[9px] font-bold text-slate-400 uppercase tracking-widest">
           <span>Dearo Core Banking System</span>
           <span>Printed: {new Date().toLocaleDateString()}</span>
