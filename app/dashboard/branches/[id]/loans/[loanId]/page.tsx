@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft,ShieldCheck, Banknote, Calendar } from "lucide-react";
-import LoanPDFButtons from "@/components/LoanPDFButtons"; 
+import { ArrowLeft, ShieldCheck, Banknote, Calendar } from "lucide-react";
+import LoanPDFButtons from "@/components/LoanPDFButtons";
 
 export default async function LoanDocumentViewPage({ 
   params 
@@ -42,7 +42,6 @@ export default async function LoanDocumentViewPage({
       </div>
 
       <div id="print-area" className="max-w-4xl mx-auto bg-white shadow-2xl border border-slate-200 min-h-[1050px] p-12 relative print:shadow-none print:border-none print:p-0">
-        
         <div className="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-10">
           <div>
             <div className="flex items-center gap-3 mb-2">
