@@ -44,7 +44,6 @@ export default async function InvestmentDocumentPage({
           id: investment.id,
           contract_no: (investment as any).contract_no,
           amount: investment.amount,
-          billPhoto: billPhoto,
           branch_name: investment.branch?.branch_name
         }} />
       </div>

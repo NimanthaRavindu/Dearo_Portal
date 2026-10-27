@@ -6,35 +6,13 @@ type InvestmentData = {
   id: number;
   contract_no?: string | null;
   amount: any;
-  billPhoto?: string | null;
   branch_name?: string;
+  statement_date?: string | null;
 }
 
 export default function InvestmentPDFButtons({ investment }: { investment: InvestmentData }) {
   const [downloading, setDownloading] = useState(false);
   const handlePrint = () => window.print();
-
-  const getCloudinaryBase64 = async (url: string): Promise<string | null> => {
-    if (!url) return null;
-    if (url.startsWith('data:')) return url;
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const ctx = canvas.getContext('2d');
-          if(!ctx) return resolve(null);
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/png'));
-        } catch { resolve(null); }
-      };
-      img.onerror = () => resolve(null);
-      img.src = url;
-    });
-  };
 
   const handleDownloadPDF = async () => {
     setDownloading(true);
@@ -48,10 +26,12 @@ export default function InvestmentPDFButtons({ investment }: { investment: Inves
 
       const hasContractNo = !!(investment.contract_no && investment.contract_no.trim() !== "");
       const contractNo = investment.contract_no || "";
+      const branchName = investment.branch_name || "Thissamaharama";
       const amount = Number(investment.amount || 0);
+      const statementDate = investment.statement_date || "2026-09-01";
 
       let y = 12;
-      doc.setFillColor(15, 23, 120);
+      doc.setFillColor(5, 17, 57);
       doc.rect(0, y, pageW, 2, "F");
       y = 28;
       doc.setFillColor(5, 17, 57);
@@ -61,80 +41,97 @@ export default function InvestmentPDFButtons({ investment }: { investment: Inves
       doc.setFontSize(12);
       doc.text("I", 17.5, y+6.5);
       doc.setTextColor(5, 17, 57);
-      doc.setFontSize(16);
+      doc.setFontSize(14);
       doc.text("INVESTMENT CERTIFICATE", 27, y+6.5);
-      y += 14;
-      doc.setTextColor(140,150,170);
-      doc.setFontSize(6.5);
+      doc.setFontSize(8);
+      doc.setFont("helvetica","normal");
+      doc.setTextColor(100,116,139);
+      doc.text(branchName, pageW-14, y+2, { align: "right" });
+      if(hasContractNo) {
+        doc.setFontSize(6);
+        doc.text(`REF: ${contractNo}`, pageW-14, y+6, { align: "right" });
+      }
+      y += 12;
+      doc.setTextColor(148,163,184);
+      doc.setFontSize(6);
       doc.text("DEARO INVESTMENT LIMITED - ASSET MANAGEMENT", 14, y);
       y += 6;
       doc.setDrawColor(235,238,245);
       doc.line(14, y, pageW-14, y);
+      y += 12;
 
-      if (!hasContractNo) {
-        y += 10;
-        doc.setFillColor(254, 226, 226);
-        doc.setDrawColor(239, 68, 68);
-        doc.roundedRect(14, y, pageW-28, 12, 2, 2, "FD");
-        doc.setTextColor(185, 28, 28);
-        doc.setFontSize(9);
-        doc.text("!! BORU / FAKE - VALID CONTRACT NUMBER EKAK NATHA !!", pageW/2, y+7.5, { align: "center" });
-        y += 18;
-      } else {
+      // 01 - NO RED ERROR ANYMORE
+      doc.setTextColor(37, 99, 235);
+      doc.setFontSize(7);
+      doc.setFont("helvetica","bold");
+      doc.text("01. INVESTMENT IDENTIFICATION", 14, y);
+      y += 4;
+      doc.setDrawColor(241,245,249);
+      doc.line(14, y, pageW-14, y);
+      y += 10;
+      
+      if(hasContractNo){
+        doc.setTextColor(140,140,140);
+        doc.setFontSize(5.5);
+        doc.setFont("helvetica","bold");
+        doc.text("CONTRACT NO", 22, y);
+        y += 5;
+        doc.setFontSize(10);
+        doc.setFont("helvetica","bold");
+        doc.setTextColor(15,23,42);
+        doc.text(contractNo, 22, y);
         y += 14;
       }
 
-      doc.setTextColor(37, 99, 235);
-      doc.setFontSize(7.5);
-      doc.text("01. INVESTMENT IDENTIFICATION", 14, y);
+      // 02 - FINANCIAL ALLOCATION - screenshot eke widiyata
+      doc.setFillColor(248,250,252);
+      doc.setDrawColor(241,245,249);
+      doc.roundedRect(14, y, pageW-28, 32, 4, 4, "FD");
       y += 8;
-      if (hasContractNo) {
-        doc.setTextColor(140,140,140);
-        doc.setFontSize(6);
-        doc.text("CONTRACT NO", 14, y);
-        y += 7;
-        doc.setFontSize(11);
-        doc.setFont("helvetica","bold");
-        doc.setTextColor(15,23,42);
-        doc.text(contractNo, 14, y);
-        y += 12;
-      }
+      doc.setTextColor(100,116,139);
+      doc.setFontSize(6);
+      doc.setFont("helvetica","bold");
+      doc.text("02. FINANCIAL ALLOCATION", 20, y);
+      y += 4;
+      doc.setDrawColor(226,232,240);
+      doc.line(20, y, pageW-20, y);
+      y += 8;
 
-      y += 10;
-      doc.setFillColor(248,249,252);
-      doc.setDrawColor(230,235,245);
-      doc.roundedRect(14, y, pageW-28, 30, 4, 4, "FD");
-      y += 10;
-      doc.setTextColor(130,130,130);
-      doc.setFontSize(5.5);
+      doc.setTextColor(100,116,139);
+      doc.setFontSize(5);
+      doc.setFont("helvetica","bold");
       doc.text("INVESTMENT AMOUNT", 22, y);
-      y += 6;
+      doc.text("STATEMENT DATE", 110, y);
+      y += 5;
       doc.setTextColor(15,23,42);
-      doc.setFontSize(14);
+      doc.setFontSize(10);
       doc.setFont("helvetica","bold");
       doc.text(`Rs. ${amount.toLocaleString()}.00`, 22, y);
+      doc.setFontSize(8);
+      doc.text(statementDate, 110, y);
 
-      y += 20;
-      doc.setTextColor(37, 99, 235);
-      doc.setFontSize(7);
-      doc.setFont("helvetica","normal");
-      doc.text("02. UPLOADED BILL ATTACHMENT", 14, y);
-      y += 8;
+      // Footer
+      y = 240;
+      doc.setDrawColor(203,213,225);
+      doc.line(14, y, 85, y);
+      doc.line(115, y, pageW-14, y);
+      y += 4;
+      doc.setTextColor(148,163,184);
+      doc.setFontSize(5);
+      doc.setFont("helvetica","bold");
+      doc.text("AUTHORIZED SIGNATORY", 14, y);
+      doc.text("INVESTOR SIGNATURE", 115, y);
 
-      if (investment.billPhoto) {
-        const base64 = await getCloudinaryBase64(investment.billPhoto);
-        if (base64) {
-          try {
-            doc.setDrawColor(200,200,200);
-            doc.setFillColor(250,250,252);
-            doc.roundedRect(14, y, 90, 65, 3, 3, "FD");
-            const imgType = base64.includes('png') ? 'PNG' : 'JPEG';
-            doc.addImage(base64, imgType, 16, y+2, 86, 61, undefined, 'FAST');
-          } catch {}
-        }
-      }
+      y = 275;
+      doc.setDrawColor(241,245,249);
+      doc.line(14, y, pageW-14, y);
+      y += 5;
+      doc.setFontSize(5);
+      doc.setTextColor(148,163,184);
+      doc.text("DEARO SYSTEM GENERATED RECORD", 14, y);
+      doc.text(`PRINTED ON: ${new Date().toLocaleString()}`, pageW-14, y, { align: "right" });
 
-      doc.save(`INVESTMENT-${hasContractNo ? contractNo : 'INVALID'}-${investment.id}.pdf`);
+      doc.save(`INVESTMENT-${hasContractNo ? contractNo : investment.id}-${investment.id}.pdf`);
     } catch (e) {
       console.error(e);
       alert("PDF failed");
