@@ -120,25 +120,6 @@ export default async function AccountDocumentPage({
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 space-y-3">
-            <h3 className="text-xs font-black text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-              <ImageIcon size={14}/>03. Uploaded Bill Attachment
-            </h3>
-            {account.billPhoto ? (
-              <div className="mt-2 border border-slate-200 rounded-xl overflow-hidden bg-slate-50 p-2 max-w-md shadow-inner">
-                <img 
-                  src={getImageSrc(account.billPhoto)} 
-                  alt="Uploaded Bill Attachment"
-                  className="w-full h-auto rounded-lg border border-slate-100 object-contain max-h-96" 
-                />
-              </div>
-            ) : (
-              <div className="p-4 border border-dashed border-slate-200 bg-slate-50 rounded-xl text-center text-xs text-slate-400 italic">
-                No bill photo Attachment uploaded for this account record.
-              </div>
-            )}
-          </div>
-
           <div className="grid grid-cols-2 gap-8">
             <div className="flex items-center gap-4">
                <Calendar size={20} className="text-slate-300" />
