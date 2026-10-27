@@ -53,20 +53,19 @@ export default function AccountPDFButtons({ account }: { account: AccountData })
       const pageW = 210;
 
       const hasAccNo = !!(account.account_number && account.account_number.trim() !== "");
-      const branchName = account.branch_name || "Branch";
+      const branchName = account.branch_name || "Batticalo";
       const customerName = account.customer_name || "N/A";
       const accNo = account.account_number || "";
-      const billType = account.bill_type || "PETTY CASH";
+      const billType = account.bill_type || "Petty Cash";
       const amount = Number(account.amount || 0);
       
-      // STATEMENT DATE - oya image eke 2026-09-01 wage
       const rawDate = account.statement_date || account.created_at || account.createdAt || "2026-09-01";
       let statementDate = "2026-09-01";
       try {
         const d = new Date(rawDate);
         if(!isNaN(d.getTime())) statementDate = d.toISOString().split('T')[0];
         else if(typeof rawDate === 'string') statementDate = rawDate.split('T')[0];
-      } catch { statementDate = "2026-09-01"; }
+      } catch {}
 
       doc.setFillColor(255,255,255);
       doc.rect(0,0,pageW,297,"F");
@@ -85,13 +84,7 @@ export default function AccountPDFButtons({ account }: { account: AccountData })
       doc.text("ACCOUNT INFORMATION STATEMENT", 27, y+6.5);
       doc.setFontSize(9);
       doc.setFont("helvetica","normal");
-      doc.setTextColor(15,23,120);
       doc.text(branchName, pageW-14, y+2, { align: "right" });
-      if(hasAccNo){
-        doc.setFontSize(7);
-        doc.setTextColor(120,120,120);
-        doc.text(`ACC ID: ${accNo}`, pageW-14, y+6, { align: "right" });
-      }
       y += 14;
       doc.setTextColor(140,150,170);
       doc.setFontSize(6);
@@ -99,19 +92,9 @@ export default function AccountPDFButtons({ account }: { account: AccountData })
       y += 6;
       doc.setDrawColor(235,238,245);
       doc.line(14, y, pageW-14, y);
-
-      if (!hasAccNo) {
-        y += 10;
-        doc.setFillColor(254, 226, 226);
-        doc.setDrawColor(239, 68, 68);
-        doc.roundedRect(14, y, pageW-28, 10, 2, 2, "FD");
-        doc.setTextColor(185, 28, 28);
-        doc.setFontSize(8);
-        doc.text("!! BORU / FAKE - VALID ACCOUNT NUMBER EKAK NATHA !!", pageW/2, y+6.5, { align: "center" });
-        y += 16;
-      } else {
-        y += 12;
-      }
+      
+      // Rathu error eka ain kala - directly content
+      y += 12;
 
       doc.setTextColor(37, 99, 235);
       doc.setFontSize(7);
@@ -186,7 +169,6 @@ export default function AccountPDFButtons({ account }: { account: AccountData })
         }
       }
 
-      // ===== STATEMENT DATE - OYA SCREENSHOT EKE THIYENA WIDIYATA =====
       y += 8;
       doc.setDrawColor(240,240,240);
       doc.line(14, y, pageW-14, y);
@@ -201,7 +183,6 @@ export default function AccountPDFButtons({ account }: { account: AccountData })
       doc.setFont("helvetica","bold");
       doc.text(statementDate, 14, y);
 
-      // Footer
       let footerY = 272;
       doc.setDrawColor(180,180,180);
       doc.line(14, footerY, 85, footerY);
@@ -215,7 +196,7 @@ export default function AccountPDFButtons({ account }: { account: AccountData })
       doc.text("ACCOUNT HOLDER SIGNATURE", 115, footerY);
       doc.text(`PRINTED: ${new Date().toLocaleDateString()}`, pageW-14, footerY+3, { align: "right" });
 
-      doc.save(`ACCOUNT-${hasAccNo ? accNo : 'INVALID'}-${account.id}.pdf`);
+      doc.save(`ACCOUNT-${hasAccNo ? accNo : account.id}-${account.id}.pdf`);
     } catch (e) {
       console.error(e);
       alert("PDF failed");
