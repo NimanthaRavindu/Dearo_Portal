@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use, useTransition, useMemo } from "react";
-import { ArrowLeft, AlertCircle, Check, X, FileText, Loader2, Info, Tag, Calendar, Activity, Clock, CheckCircle2, Eye, Hash, CalendarDays, FilterX } from "lucide-react";
+import { ArrowLeft, AlertCircle, Check, X, FileText, Loader2, Clock, CheckCircle2, Eye, CalendarDays, FilterX, Calendar } from "lucide-react";
 
 interface DocumentItem {
   id: number;
@@ -12,6 +12,14 @@ interface DocumentItem {
   status: string;
   senderId?: number;
   createdAt: string;
+  branchId?: number | string;
+  branch_id?: number | string;
+  referenceId?: number | string;
+  loanId?: number | string;
+  accountId?: number | string;
+  investmentId?: number | string;
+  link?: string;
+  referenceNo?: string;
 }
 
 interface PageProps {
@@ -30,12 +38,7 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  // SINGLE DATE ONLY - From To ayin kala
   const [filterDate, setFilterDate] = useState<string>("");
-
-  const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
-  const [showView, setShowView] = useState(false);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -52,7 +55,6 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     fetchDocuments();
   }, [type]);
 
-  // DATE FILTER - ONE DATE ONLY
   const filteredData = useMemo(() => {
     if (!filterDate) return dataList;
     return dataList.filter(doc => {
@@ -61,10 +63,28 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     });
   }, [dataList, filterDate]);
 
-  const clearFilter = () => setFilterDate("");
-  const setToday = () => setFilterDate(new Date().toISOString().split('T')[0]);
+  const handleEyeClick = (doc: DocumentItem) => {
+    // 1. requesthistory.link thiyenawa nam direct eka
+    if (doc.link && doc.link.startsWith('/dashboard')) {
+      router.push(doc.link);
+      return;
+    }
 
-  const openView = (doc: DocumentItem) => { setSelectedDoc(doc); setShowView(true); };
+    // 2. nathnam type anuwa yanna
+    const docType = (doc.documentType || type || "").toUpperCase();
+    const branchId = doc.branchId || doc.branch_id || doc.senderId || 1;
+    const realId = doc.referenceId || doc.id;
+
+    if (docType === "LOAN") {
+      router.push(`/dashboard/branches/${branchId}/loans/${realId}`);
+    } else if (docType === "ACCOUNT") {
+      router.push(`/dashboard/branches/${branchId}/accounts/${realId}`);
+    } else if (docType === "INVESTMENT") {
+      router.push(`/dashboard/branches/${branchId}/investments/${realId}`);
+    } else {
+      router.push(`/dashboard/branches/${branchId}/loans/${realId}`);
+    }
+  };
 
   const updateStatusAction = async (docNumber: string, action: "SUBMIT" | "DECLINE", docType: string, senderId?: number) => {
     const res = await fetch("/api/document-request", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ docNumber, action, documentType: docType, senderId }) });
@@ -78,7 +98,6 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
     if (!window.confirm(action === "SUBMIT" ? "Submit karanna sure da?" : "Decline karanna sure da?")) return;
     const prev = [...dataList];
     setDataList(p => p.filter(i => i.id !== id));
-    setShowView(false);
     startTransition(async () => {
       try {
         setActionLoading(id);
@@ -100,15 +119,14 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
         <Link href="/dashboard" className="flex items-center gap-2 text-xs font-black uppercase text-slate-400 hover:text-slate-900"><ArrowLeft size={16}/> Back</Link>
       </div>
 
-      {/* SINGLE DATE FILTER ONLY */}
       <div className="bg-white border border-slate-200 rounded-[1.5rem] p-5 flex flex-wrap items-center gap-4 shadow-sm">
         <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest"><CalendarDays size={16}/> Date Filter</div>
         <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">
           <Calendar size={14} className="text-slate-400" />
           <input type="date" value={filterDate} onChange={(e)=>setFilterDate(e.target.value)} className="bg-transparent text-xs font-bold text-slate-700 focus:outline-none" />
         </div>
-        <button onClick={setToday} className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase">Today</button>
-        {filterDate && <button onClick={clearFilter} className="px-4 py-2.5 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-[10px] font-black uppercase flex items-center gap-1"><FilterX size={12}/> Clear ({filteredData.length})</button>}
+        <button onClick={()=>setFilterDate(new Date().toISOString().split('T')[0])} className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase">Today</button>
+        {filterDate && <button onClick={()=>setFilterDate("")} className="px-4 py-2.5 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-[10px] font-black uppercase flex items-center gap-1"><FilterX size={12}/> Clear ({filteredData.length})</button>}
       </div>
 
       {error && <div className="p-4 bg-rose-100 border border-rose-300 text-rose-700 rounded-xl flex items-center gap-2 text-sm font-bold"><AlertCircle size={18} /> {error}</div>}
@@ -118,22 +136,26 @@ export default function DocumentTypePage({ params, initialData = [], typeTitle }
           <thead className="bg-slate-50 border-b"><tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic"><th className="px-10 py-6">Document</th><th className="px-10 py-6">Type</th><th className="px-10 py-6">Submitted Date</th><th className="px-10 py-6">Status</th><th className="px-10 py-6 text-center">Actions</th></tr></thead>
           <tbody className="divide-y divide-slate-100">
             {filteredData.map(doc => (
-              <tr key={doc.id} onClick={()=>openView(doc)} className="hover:bg-blue-50/50 cursor-pointer group">
-                <td className="px-10 py-7 font-black text-sm group-hover:text-blue-600 flex items-center gap-2">#{doc.docNumber || doc.id} <Eye size={12} className="opacity-0 group-hover:opacity-100"/></td>
+              <tr key={doc.id} className="hover:bg-blue-50/50 group">
+                <td className="px-10 py-7 font-black text-sm">#{doc.docNumber || doc.id}</td>
                 <td className="px-10 py-7"><span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase border">{doc.documentType}</span></td>
                 <td className="px-10 py-7 text-xs font-bold text-slate-500">{new Date(doc.createdAt).toLocaleDateString('en-GB')}</td>
                 <td className="px-10 py-7 text-[10px] font-black uppercase flex items-center gap-1">{doc.status === 'PENDING' ? <Clock size={12} className="text-amber-500"/> : <CheckCircle2 size={12} className="text-emerald-500"/>}{doc.status}</td>
-                <td className="px-10 py-7"><div className="flex justify-center gap-2" onClick={e=>e.stopPropagation()}><button onClick={()=>openView(doc)} className="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center"><Eye size={14}/></button><button onClick={()=>deleteAction(doc.id, doc.docNumber, 'SUBMIT', doc.documentType, doc.senderId)} disabled={actionLoading===doc.id} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-1"><Check size={12}/> Submit</button><button onClick={()=>deleteAction(doc.id, doc.docNumber, 'DECLINE', doc.documentType, doc.senderId)} disabled={actionLoading===doc.id} className="bg-rose-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-1"><X size={12}/> Decline</button></div></td>
+                <td className="px-10 py-7">
+                  <div className="flex justify-center gap-2">
+                    <button onClick={()=>handleEyeClick(doc)} className="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-black" title={doc.link || `${doc.documentType} View`}>
+                      <Eye size={14}/>
+                    </button>
+                    <button onClick={()=>deleteAction(doc.id, doc.docNumber, 'SUBMIT', doc.documentType, doc.senderId)} disabled={actionLoading===doc.id} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-1"><Check size={12}/> Submit</button>
+                    <button onClick={()=>deleteAction(doc.id, doc.docNumber, 'DECLINE', doc.documentType, doc.senderId)} disabled={actionLoading===doc.id} className="bg-rose-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-1"><X size={12}/> Decline</button>
+                  </div>
+                </td>
               </tr>
             ))}
-            {filteredData.length===0 && <tr><td colSpan={5} className="py-20 text-center text-slate-300 font-black uppercase text-xs tracking-widest">No records for {filterDate || 'selected date'} <br/><button onClick={clearFilter} className="mt-3 text-slate-900 underline">Clear Filter</button></td></tr>}
+            {filteredData.length===0 && <tr><td colSpan={5} className="py-20 text-center text-slate-300 font-black uppercase text-xs tracking-widest">No records for {filterDate || 'selected date'} <br/><button onClick={()=>setFilterDate("")} className="mt-3 text-slate-900 underline">Clear Filter</button></td></tr>}
           </tbody>
         </table>
       </div>
-
-      {showView && selectedDoc && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4"><div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={()=>setShowView(false)} /><div className="relative bg-white w-full max-w-lg rounded-[28px] overflow-hidden shadow-2xl"><div className="bg-slate-900 text-white p-6 flex justify-between items-center"><h2 className="font-black uppercase">#{selectedDoc.docNumber}</h2><button onClick={()=>setShowView(false)} className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center"><X size={16}/></button></div><div className="p-6 space-y-3 text-sm"><div className="flex justify-between"><span className="text-slate-400">Date:</span><b>{new Date(selectedDoc.createdAt).toLocaleString('en-GB')}</b></div><div className="flex justify-between"><span className="text-slate-400">Status:</span><b>{selectedDoc.status}</b></div><div className="flex justify-between"><span className="text-slate-400">Type:</span><b>{selectedDoc.documentType}</b></div></div></div></div>
-      )}
     </div>
   );
 }
