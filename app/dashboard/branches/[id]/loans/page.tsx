@@ -1,9 +1,8 @@
-import {prisma} from "@/lib/db";
-import {ArrowLeft, FileText, Plus, Eye } from "lucide-react";
+import { prisma } from "@/lib/db";
+import { ArrowLeft, Plus } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import ViewDocButton from "@/components/ViewDocButton";
-
 
 export default async function LoanPage({ params }: { params: Promise<{ id: string }> }) {
   
@@ -11,7 +10,7 @@ export default async function LoanPage({ params }: { params: Promise<{ id: strin
   const branchId = parseInt(resolvedParams.id);
 
   if (isNaN(branchId)) {
-    return <div>Invalid Branch ID in  URL</div>;
+    return <div>Invalid Branch ID in URL</div>;
   }
   
   const branch = await prisma.branch.findUnique({
@@ -26,6 +25,8 @@ export default async function LoanPage({ params }: { params: Promise<{ id: strin
     const contract = formData.get("contract") as string;
     const duration = formData.get("duration") as string;
     const type = formData.get("type") as string;
+    const customerName = formData.get("customer_name") as string;
+    const loanDate = formData.get("loan_date") as string;
 
     await prisma.loan.create({
       data: {
@@ -33,6 +34,8 @@ export default async function LoanPage({ params }: { params: Promise<{ id: strin
         contract_no: contract,
         duration: duration,
         loan_type: type,
+        customer_name: customerName,
+        loan_date: loanDate,
         branchId: branchId,
       }
     });
@@ -49,7 +52,9 @@ export default async function LoanPage({ params }: { params: Promise<{ id: strin
       {/* Add Loan Form */}
       <div className="bg-white p-6 rounded-xl border shadow-sm">
         <h2 className="font-bold mb-4 flex items-center gap-2"><Plus size={18}/> Add Loan Document</h2>
-        <form action={addLoan} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <form action={addLoan} className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <input name="customer_name" placeholder="Customer Name" className="border p-2 rounded-lg" required />
+          <input name="loan_date" type="date" className="border p-2 rounded-lg" required />
           <input name="contract" placeholder="Contract Number" className="border p-2 rounded-lg" required />
           <input name="amount" type="number" placeholder="Amount" className="border p-2 rounded-lg" required />
           <input name="duration" placeholder="Duration (e.g. 12 Months)" className="border p-2 rounded-lg" required />
@@ -71,6 +76,8 @@ export default async function LoanPage({ params }: { params: Promise<{ id: strin
         <table className="w-full text-left">
           <thead className="bg-slate-50 border-b">
             <tr>
+              <th className="p-4">Customer Name</th>
+              <th className="p-4">Date</th>
               <th className="p-4">Contract No</th>
               <th className="p-4">Amount</th>
               <th className="p-4">Type</th>
@@ -80,11 +87,13 @@ export default async function LoanPage({ params }: { params: Promise<{ id: strin
           <tbody>
             {branch?.loan.map((loan) => (
               <tr key={loan.id} className="border-b">
+                <td className="p-4 font-medium">{loan.customer_name}</td>
+                <td className="p-4">{new Date(loan.loan_date).toLocaleDateString('en-GB')}</td>
                 <td className="p-4">{loan.contract_no}</td>
                 <td className="p-4">Rs. {loan.amount.toLocaleString()}</td>
                 <td className="p-4">{loan.loan_type}</td>
                 <td className="p-4">
-                  <ViewDocButton  branchId={branchId} type="Loan" refNo={loan.contract_no} link={`/dashboard/branches/${branchId}/loans/${loan.id}`}/>
+                  <ViewDocButton branchId={branchId} type="Loan" refNo={loan.contract_no} link={`/dashboard/branches/${branchId}/loans/${loan.id}`}/>
                 </td>
               </tr>
             ))}

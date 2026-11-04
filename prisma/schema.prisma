@@ -69,6 +69,8 @@ model loan {
   amount Float
   duration String
   loan_type String
+  customer_name String @default("")
+  loan_date String @default("")
   createdAt DateTime @default(now())
   branchId Int
   branch branch @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "Loan_branchId_fkey")
