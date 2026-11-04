@@ -8,6 +8,9 @@ type InvestmentData = {
   amount: any;
   branch_name?: string;
   statement_date?: string | null;
+  customer_name?: string | null;
+  investment_date?: string | null;
+  reason?: string | null;
 }
 
 export default function InvestmentPDFButtons({ investment }: { investment: InvestmentData }) {
@@ -29,6 +32,10 @@ export default function InvestmentPDFButtons({ investment }: { investment: Inves
       const branchName = investment.branch_name || "Thissamaharama";
       const amount = Number(investment.amount || 0);
       const statementDate = investment.statement_date || "2026-09-01";
+      // ALUTH
+      const customerName = investment.customer_name || "-";
+      const investmentDate = investment.investment_date || "-";
+      const reason = investment.reason || "";
 
       let y = 12;
       doc.setFillColor(5, 17, 57);
@@ -83,7 +90,45 @@ export default function InvestmentPDFButtons({ investment }: { investment: Inves
         y += 14;
       }
 
-      // 02 - FINANCIAL ALLOCATION - screenshot eke widiyata
+      // ALUTH - CUSTOMER NAME
+      doc.setTextColor(140,140,140);
+      doc.setFontSize(5.5);
+      doc.setFont("helvetica","bold");
+      doc.text("CUSTOMER NAME", 22, y);
+      y += 5;
+      doc.setFontSize(10);
+      doc.setFont("helvetica","bold");
+      doc.setTextColor(15,23,42);
+      doc.text(customerName, 22, y);
+      y += 14;
+
+      // ALUTH - INVESTMENT DATE
+      doc.setTextColor(140,140,140);
+      doc.setFontSize(5.5);
+      doc.setFont("helvetica","bold");
+      doc.text("INVESTMENT DATE", 22, y);
+      y += 5;
+      doc.setFontSize(10);
+      doc.setFont("helvetica","bold");
+      doc.setTextColor(15,23,42);
+      doc.text(investmentDate, 22, y);
+      y += 14;
+
+      // ALUTH - REASON
+      if(reason){
+        doc.setTextColor(140,140,140);
+        doc.setFontSize(5.5);
+        doc.setFont("helvetica","bold");
+        doc.text("REASON", 22, y);
+        y += 5;
+        doc.setFontSize(10);
+        doc.setFont("helvetica","bold");
+        doc.setTextColor(15,23,42);
+        doc.text(reason, 22, y);
+        y += 14;
+      }
+
+      // 02 - FINANCIAL ALLOCATION
       doc.setFillColor(248,250,252);
       doc.setDrawColor(241,245,249);
       doc.roundedRect(14, y, pageW-28, 32, 4, 4, "FD");

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, TrendingUp, Calendar, Hash, Banknote, Image as ImageIcon, AlertTriangle } from "lucide-react";
+import { ArrowLeft, TrendingUp, Calendar, Hash, Banknote, Image as ImageIcon, AlertTriangle, User } from "lucide-react";
 import InvestmentPDFButtons from "@/components/InvestmentPDFButtons";
 
 export default async function InvestmentDocumentPage({ 
@@ -44,7 +44,10 @@ export default async function InvestmentDocumentPage({
           id: investment.id,
           contract_no: (investment as any).contract_no,
           amount: investment.amount,
-          branch_name: investment.branch?.branch_name
+          branch_name: investment.branch?.branch_name,
+          customer_name: (investment as any).customer_name,
+          investment_date: (investment as any).investment_date,
+          reason: (investment as any).reason,
         }} />
       </div>
 
@@ -104,6 +107,42 @@ export default async function InvestmentDocumentPage({
                   </div>
                 </div>
               ) : null}
+
+              {/* Customer Name */}
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-slate-50 rounded-xl text-slate-400"><User size={20} /></div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Customer Name</p>
+                  <p className="text-lg font-bold text-slate-800">
+                    {(investment as any).customer_name || "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/*  Investment Date */}
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-slate-50 rounded-xl text-slate-400"><Calendar size={20} /></div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Investment Date</p>
+                  <p className="text-lg font-bold text-slate-800">
+                    {(investment as any).investment_date || "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Reason */}
+              {(investment as any).reason ? (
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-slate-50 rounded-xl text-slate-400"><Hash size={20} /></div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Reason</p>
+                    <p className="text-lg font-bold text-slate-800">
+                      {(investment as any).reason}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
             </div>
           </div>
 
@@ -136,7 +175,6 @@ export default async function InvestmentDocumentPage({
               </div>
             </div>
           </div>
-
 
           <div className="pt-32 grid grid-cols-2 gap-20 text-center">
             <div>

@@ -82,7 +82,7 @@ export default async function LoanDocumentViewPage({
                   {loan.loan_type}
                 </div>
               </div>
-              {/* ALUTH - Customer Name */}
+              {/* Customer Name */}
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Customer Name</p>
                 <p className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -90,7 +90,7 @@ export default async function LoanDocumentViewPage({
                   {(loan as any).customer_name || "Not Provided"}
                 </p>
               </div>
-              {/* ALUTH - Loan Date */}
+              {/* Loan Date */}
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Loan Date</p>
                 <p className="text-lg font-bold text-slate-800 flex items-center gap-2">
