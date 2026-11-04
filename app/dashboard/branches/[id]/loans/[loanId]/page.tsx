@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ShieldCheck, Banknote, Calendar } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Banknote, Calendar, User, CalendarDays } from "lucide-react";
 import LoanPDFButtons from "@/components/LoanPDFButtons";
 
 export default async function LoanDocumentViewPage({ 
@@ -37,7 +37,9 @@ export default async function LoanDocumentViewPage({
           loan_type: loan.loan_type,
           amount: loan.amount,
           duration: loan.duration,
-          branch_name: loan.branch?.branch_name
+          branch_name: loan.branch?.branch_name,
+          customer_name: (loan as any).customer_name,
+          loan_date: (loan as any).loan_date,
         }} />
       </div>
 
@@ -79,6 +81,22 @@ export default async function LoanDocumentViewPage({
                 <div className="inline-block px-3 py-1 bg-slate-100 text-slate-700 rounded text-xs font-bold uppercase">
                   {loan.loan_type}
                 </div>
+              </div>
+              {/* ALUTH - Customer Name */}
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Customer Name</p>
+                <p className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <User size={18} className="text-blue-600" />
+                  {(loan as any).customer_name || "Not Provided"}
+                </p>
+              </div>
+              {/* ALUTH - Loan Date */}
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Loan Date</p>
+                <p className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <CalendarDays size={18} className="text-blue-600" />
+                  {(loan as any).loan_date || "Not Provided"}
+                </p>
               </div>
             </div>
           </div>

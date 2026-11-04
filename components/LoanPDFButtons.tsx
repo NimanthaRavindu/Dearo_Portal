@@ -2,19 +2,23 @@
 import { useState } from "react";
 import { Printer, Download, Loader2 } from "lucide-react";
 
-type LoanData = {
+type LoanProps = {
   id: number;
   contract_no: string;
   loan_type: string;
-  amount: any;
-  duration: any;
+  amount: number;
+  duration: string;
   branch_name?: string;
-}
+  customer_name?: string;
+  loan_date?: string;
+};
 
-export default function LoanPDFButtons({ loan }: { loan: LoanData }) {
+export default function LoanPDFButtons({ loan }: { loan: LoanProps }) {
   const [downloading, setDownloading] = useState(false);
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => {
+    window.print();
+  };
 
   const handleDownloadPDF = async () => {
     setDownloading(true);
@@ -32,6 +36,8 @@ export default function LoanPDFButtons({ loan }: { loan: LoanData }) {
       const amount = Number(loan.amount || 50000);
       const duration = loan.duration || "";
       const dateStr = new Date().toLocaleDateString("en-US");
+      const customerName = (loan as any).customer_name || "Not Provided";
+      const loanDate = (loan as any).loan_date || "Not Provided";
 
       doc.setFillColor(255,255,255);
       doc.rect(0,0,pageW,297,"F");
@@ -92,6 +98,20 @@ export default function LoanPDFButtons({ loan }: { loan: LoanData }) {
       doc.setFontSize(7);
       doc.setTextColor(60,60,60);
       doc.text(loanType, 113, y-0.5);
+
+      // CUSTOMER NAME & LOAN DATE
+      y += 12;
+      doc.setTextColor(140,140,140);
+      doc.setFontSize(6);
+      doc.setFont("helvetica","bold");
+      doc.text("CUSTOMER NAME", 14, y);
+      doc.text("LOAN DATE", 110, y);
+      y += 6;
+      doc.setTextColor(15,23,42);
+      doc.setFontSize(11);
+      doc.setFont("helvetica","bold");
+      doc.text(customerName, 14, y);
+      doc.text(loanDate, 110, y);
 
       y += 18;
 
