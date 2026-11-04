@@ -24,9 +24,12 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
       data: {
         contract_no: formData.get("cNo") as string,
         amount: parseFloat(formData.get("amount") as string),
-        reason: formData.get("reason") as string, // NEW FIELD ADDED
+        reason: formData.get("reason") as string,
         branchId: branchId,
-      }
+        // ALUTH - Customer Name & Date
+        customer_name: formData.get("customer_name") as string,
+        investment_date: formData.get("investment_date") as string,
+      } as any
     });
     revalidatePath(`/dashboard/branches/${branchId}/investments`);
   }
@@ -45,6 +48,11 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
           <input name="cNo" placeholder="Contract_Number" className="border p-2 rounded-lg" required />
           <input name="amount" type="number" placeholder="Amount" className="border p-2 rounded-lg" required />
           <input name="reason" placeholder="Reason" className="border p-2 rounded-lg" required />
+
+          {/* ALUTH - Customer Name & Date */}
+          <input name="customer_name" placeholder="Customer Name" className="border p-2 rounded-lg" required />
+          <input name="investment_date" type="date" className="border p-2 rounded-lg" required />
+
           <button type="submit" className="col-span-full bg-orange-600 text-white p-2 rounded-lg font-bold">Add Investment</button>
         </form>
       </div>
@@ -54,6 +62,8 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
           <thead className="bg-slate-50 border-b">
             <tr>
               <th className="p-4">Certificate No</th>
+              <th className="p-4">Customer Name</th>
+              <th className="p-4">Date</th>
               <th className="p-4">Amount</th>
               <th className="p-4">Reason</th>
               <th className="p-4">Action</th>
@@ -63,6 +73,8 @@ export default async function InvestmentPage({ params }: { params: Promise<{ id:
             {branch?.investment.map((inv: any) => (
               <tr key={inv.id} className="border-b">
                 <td className="p-4">{inv.contract_no}</td>
+                <td className="p-4">{inv.customer_name || "-"}</td>
+                <td className="p-4">{inv.investment_date || "-"}</td>
                 <td className="p-4">Rs. {inv.amount.toLocaleString()}</td>
                 <td className="p-4">{inv.reason || "-"}</td>
                 <td className="p-4">

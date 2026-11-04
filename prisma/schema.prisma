@@ -60,6 +60,10 @@ model investment {
   uploadedAt DateTime @default(now())
   branch branch @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "Investment_branchId_fkey")
 
+  // ALUTH - Customer Name & Date
+  customer_name String @default("") @db.VarChar(255)
+  investment_date String @default("") @db.VarChar(50)
+
   @@index([branchId], map: "Investment_branchId_fkey")
 }
 
